@@ -1,0 +1,59 @@
+[project]
+name = "wellapi"
+version = "0.3.0"
+description = "A simple web framework for aws lambda"
+readme = "README.md"
+authors = [
+    { name = "romayuhym", email = "romayuhym@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic==2.11.3",
+    "typing-extensions>=4.8.0",
+    "email-validator>=2.0.0",
+]
+
+[project.scripts]
+wellapi = "wellapi.cli.main:cli"
+
+[project.optional-dependencies]
+deploy = [
+    "aws-cdk-lib>=2.189.1",
+    "constructs>=10.0.0",
+]
+local = [
+    "click>=8.1.8",
+    "watchdog>=4.0.2",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+    "C901",  # too complex
+    "W191",  # indentation contains tabs
+]
+
+[tool.ruff.lint.isort]
+known-third-party = ["fastapi", "pydantic", "starlette"]
+
+[tool.ruff.lint.pyupgrade]
+# Preserve types, even if a file imports `from __future__ import annotations`.
+keep-runtime-typing = true
+
+[tool.inline-snapshot]
+# default-flags=["fix"]
+# default-flags=["create"]
