@@ -39,6 +39,10 @@ class WellApiCDK(Construct):
         *,
         app_srt: str,
         handlers_dir: str,
+        vpc = None,
+        vpc_subnets = None,
+        sg = None,
+        environment: dict | None = None,
         cors: bool = False,
         cache_enable: bool = False,
         log_enable: bool = False,
@@ -78,6 +82,10 @@ class WellApiCDK(Construct):
                 timeout=Duration.seconds(lmbd.timeout),
                 code=code_layer,
                 layers=shared_layer,  # type: ignore
+                vpc=vpc,
+                vpc_subnets=vpc_subnets,
+                security_groups=sg,
+                environment=environment,
             )
 
             if lmbd.type_ == "endpoint":
