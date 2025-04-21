@@ -2,7 +2,6 @@ import sys
 from collections.abc import Callable
 from enum import Enum
 
-from wellapi import Scope
 from wellapi.applications import Lambda
 from wellapi.routing import compile_path
 from wellapi.utils import import_app, load_handlers
@@ -53,7 +52,7 @@ class Route:
         module = sys.modules[self.endpoint_module]
         return getattr(module, self.endpoint_name)(*args, **kwargs)
 
-    def matches(self, scope: Scope, method, path) -> tuple[Match, Scope]:
+    def matches(self, scope: dict, method, path) -> tuple[Match, dict]:
         route_path = get_route_path(path)
         match = self.path_regex.match(route_path)
         if match:
@@ -98,7 +97,7 @@ class Router:
 
             self.add_route(path, method, e.endpoint)
 
-    def __call__(self, scope: Scope, method, path):
+    def __call__(self, scope: dict, method, path):
         for route in self.routes:
             match, child_scope = route.matches(scope, method, path)
             if match == Match.FULL:
