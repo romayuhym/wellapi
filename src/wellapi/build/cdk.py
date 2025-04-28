@@ -56,7 +56,7 @@ class WellApiCDK(Construct):
             self,
             "WellApiRole",
             assumed_by=iam.ServicePrincipal("apigateway.amazonaws.com"),
-            role_name="ApiRole",
+            role_name="WellApiRole",
         )
         api_role.add_to_policy(
             iam.PolicyStatement(
@@ -64,6 +64,8 @@ class WellApiCDK(Construct):
                 resources=["*"],
             )
         )
+        cfn_role: iam.CfnRole = api_role.node.default_child  # type: ignore
+        cfn_role.override_logical_id("WellApiRole")
 
         wellapi_app: WellApi = self._package_app(cors=cors)
 
@@ -233,7 +235,7 @@ class WellApiCDK(Construct):
         )
         self.usage_plan.add_api_key(self.api_key)
 
-    def _package_app(self, cors: bool = False, api_role_arn: str | None = None) -> WellApi:
+    def _package_app(self, cors: bool = False) -> WellApi:
         wellapi_app = import_app(self.app_srt)
         load_handlers(self.handlers_dir)
 
@@ -246,7 +248,6 @@ class WellApiCDK(Construct):
             tags=wellapi_app.openapi_tags,
             servers=wellapi_app.servers,
             cors=cors,
-            api_role_arn=api_role_arn,
         )
         with open(OPENAPI_FILE, "w") as f:
             json.dump(resp, f)
