@@ -79,9 +79,8 @@ class Router:
         return route
 
     def discover_handlers(self, app_srt, path_to_handlers_dir):
-        load_handlers(path_to_handlers_dir)
-
         app = import_app(app_srt)
+        load_handlers(path_to_handlers_dir)
 
         self.routes = []
         e: Lambda
