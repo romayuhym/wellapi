@@ -474,7 +474,9 @@ def get_openapi_operation_metadata(
         "passthroughBehavior": "when_no_match",
         "httpMethod": "POST",
         "type": "aws_proxy",
-        "credentials": api_role_arn,
+        "credentials": {
+            "Fn::GetAtt": ["WellApiRole", "Arn"]
+        },
     }
 
     return operation

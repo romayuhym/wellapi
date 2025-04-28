@@ -54,7 +54,7 @@ class WellApiCDK(Construct):
 
         api_role = iam.Role(
             self,
-            "ApiRole",
+            "WellApiRole",
             assumed_by=iam.ServicePrincipal("apigateway.amazonaws.com"),
             role_name="ApiRole",
         )
@@ -65,7 +65,7 @@ class WellApiCDK(Construct):
             )
         )
 
-        wellapi_app: WellApi = self._package_app(cors=cors, api_role_arn=api_role.role_arn)
+        wellapi_app: WellApi = self._package_app(cors=cors)
 
         self._create_api(wellapi_app, cache_enable=cache_enable, log_enable=log_enable)
 
@@ -113,15 +113,6 @@ class WellApiCDK(Construct):
             )
 
             if lmbd.type_ == "endpoint":
-                lambda_function.add_permission(
-                    f"{lmbd.arn}Permission",
-                    principal=iam.ServicePrincipal("apigateway.amazonaws.com"),
-                    action="lambda:InvokeFunction",
-                    source_arn=self.api.arn_for_execute_api(
-                        lmbd.method.upper(), lmbd.path
-                    ),
-                )
-
                 cfn_lambda: _lambda.CfnFunction = lambda_function.node.default_child  # type: ignore
                 cfn_lambda.override_logical_id(f"{lmbd.arn}Function")
 
