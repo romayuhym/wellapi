@@ -146,6 +146,7 @@ def get_openapi(
     license_info: dict[str, str | Any] | None = None,
     separate_input_output_schemas: bool = True,
     cors: bool = False,
+    api_role_arn: str | None = None
 ) -> dict[str, Any]:
     info: dict[str, Any] = {"title": title, "version": version}
     if description:
@@ -184,6 +185,7 @@ def get_openapi(
             field_mapping=field_mapping,
             separate_input_output_schemas=separate_input_output_schemas,
             cors=cors,
+            api_role_arn=api_role_arn,
         )
         if result:
             path, security_schemes, path_definitions = result
@@ -266,6 +268,7 @@ def get_openapi_path(
     ],
     separate_input_output_schemas: bool = True,
     cors: bool = False,
+    api_role_arn: str | None = None
 ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
     path = {}
     security_schemes: dict[str, Any] = {}
@@ -276,7 +279,7 @@ def get_openapi_path(
         current_response_class = route.response_class
     assert current_response_class, "A response class is needed to generate OpenAPI"
     route_response_media_type = "application/json"
-    operation = get_openapi_operation_metadata(route=route, operation_ids=operation_ids)
+    operation = get_openapi_operation_metadata(route=route, operation_ids=operation_ids, api_role_arn=api_role_arn)
     parameters: list[dict[str, Any]] = []
     flat_dependant = get_flat_dependant(route.dependant, skip_repeats=True)
     security_definitions, operation_security = get_openapi_security_definitions(
@@ -441,7 +444,7 @@ def get_openapi_path(
 
 
 def get_openapi_operation_metadata(
-    *, route: Lambda, operation_ids: set[str]
+    *, route: Lambda, operation_ids: set[str], api_role_arn: str | None = None
 ) -> dict[str, Any]:
     operation: dict[str, Any] = {}
     if route.tags:
@@ -468,8 +471,10 @@ def get_openapi_operation_metadata(
         "uri": {
             "Fn::Sub": f"arn:aws:apigateway:${{AWS::Region}}:lambda:path/2015-03-31/functions/${{{route.arn}Function.Arn}}/invocations"
         },
+        "passthroughBehavior": "when_no_match",
         "httpMethod": "POST",
         "type": "aws_proxy",
+        "credentials": api_role_arn,
     }
 
     return operation

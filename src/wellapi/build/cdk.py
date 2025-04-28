@@ -52,7 +52,20 @@ class WellApiCDK(Construct):
         self.app_srt = app_srt
         self.handlers_dir = os.path.abspath(handlers_dir)
 
-        wellapi_app: WellApi = self._package_app(cors=cors)
+        api_role = iam.Role(
+            self,
+            "ApiRole",
+            assumed_by=iam.ServicePrincipal("apigateway.amazonaws.com"),
+            role_name="ApiRole",
+        )
+        api_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=["lambda:InvokeFunction"],
+                resources=["*"],
+            )
+        )
+
+        wellapi_app: WellApi = self._package_app(cors=cors, api_role_arn=api_role.role_arn)
 
         self._create_api(wellapi_app, cache_enable=cache_enable, log_enable=log_enable)
 
@@ -70,6 +83,16 @@ class WellApiCDK(Construct):
         ]
         code_layer = _lambda.Code.from_asset(APP_LAYOUT_FILE)
 
+        lambda_role = iam.Role(
+            self,
+            "LambdaRole",
+            assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
+            managed_policies=[
+                iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AWSLambdaBasicExecutionRole"),
+                iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AWSLambdaVPCAccessExecutionRole"),
+            ],
+        )
+
         lmbd: Lambda
         for lmbd in wellapi_app.lambdas:
             lambda_function = _lambda.Function(
@@ -86,6 +109,7 @@ class WellApiCDK(Construct):
                 vpc_subnets=vpc_subnets,
                 security_groups=sg,
                 environment=environment,
+                role=lambda_role
             )
 
             if lmbd.type_ == "endpoint":
@@ -218,7 +242,7 @@ class WellApiCDK(Construct):
         )
         self.usage_plan.add_api_key(self.api_key)
 
-    def _package_app(self, cors: bool = False) -> WellApi:
+    def _package_app(self, cors: bool = False, api_role_arn: str | None = None) -> WellApi:
         wellapi_app = import_app(self.app_srt)
         load_handlers(self.handlers_dir)
 
@@ -231,6 +255,7 @@ class WellApiCDK(Construct):
             tags=wellapi_app.openapi_tags,
             servers=wellapi_app.servers,
             cors=cors,
+            api_role_arn=api_role_arn,
         )
         with open(OPENAPI_FILE, "w") as f:
             json.dump(resp, f)

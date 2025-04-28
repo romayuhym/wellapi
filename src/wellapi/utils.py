@@ -35,3 +35,4 @@ def load_handlers(handlers_dir: str):
             importlib.import_module(module_name)
         except ImportError as e:
             print(f"Помилка імпорту {module_name}: {e}")
+            raise e
