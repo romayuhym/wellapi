@@ -7,7 +7,7 @@ from wellapi.datastructures import Headers, MutableHeaders, QueryParams
 
 class RequestAPIGateway:
     def __init__(self, path_params, query_params, headers, body, cookies, raw_event: dict[str, typing.Any]):
-        self._raw_event = ApiGatewayEvent(**raw_event)
+        self.raw_event = ApiGatewayEvent(**raw_event)
         self.path_params = path_params
         self.query_params = QueryParams(query_params)
         self.headers = Headers(raw=headers)
@@ -92,7 +92,7 @@ class ResponseAPIGateway:
 
 class RequestSQS:
     def __init__(self, records: list[dict[str, typing.Any]], raw_event: dict[str, typing.Any]):
-        self._raw_event = SQSEvent(**raw_event)
+        self.raw_event = SQSEvent(**raw_event)
         self._records = records
         self.path_params = None
         self.query_params = None
@@ -123,7 +123,7 @@ class RequestSQS:
 
 class RequestJob:
     def __init__(self, raw_event: dict[str, typing.Any]):
-        self._raw_event = JobEvent(**raw_event)
+        self.raw_event = JobEvent(**raw_event)
         self.path_params = None
         self.query_params = None
         self.headers = None
