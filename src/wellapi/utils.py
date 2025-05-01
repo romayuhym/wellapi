@@ -30,6 +30,9 @@ def load_handlers(handlers_dir: str):
 
     # Імпортуємо всі Python файли з директорії
     for file_path in handlers_path.glob("*.py"):
+        if file_path.stem == "__init__":
+            continue
+
         module_name = f"{handlers_module}.{file_path.stem}"
         try:
             importlib.import_module(module_name)

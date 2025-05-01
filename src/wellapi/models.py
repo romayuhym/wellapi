@@ -1,15 +1,13 @@
 import json
 import typing
 
+from wellapi.awsmodel import JobEvent, SQSEvent, ApiGatewayEvent
 from wellapi.datastructures import Headers, MutableHeaders, QueryParams
 
 
 class RequestAPIGateway:
-    """
-    https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-develop-integrations-lambda.html#http-api-develop-integrations-lambda.proxy-format
-    """
-
-    def __init__(self, path_params, query_params, headers, body, cookies):
+    def __init__(self, path_params, query_params, headers, body, cookies, raw_event: dict[str, typing.Any]):
+        self._raw_event = ApiGatewayEvent(**raw_event)
         self.path_params = path_params
         self.query_params = QueryParams(query_params)
         self.headers = Headers(raw=headers)
@@ -56,7 +54,7 @@ class RequestAPIGateway:
             else:
                 query_params.append((q_name, q_value))
 
-        return cls(path_params, query_params, headers, body, cookies)
+        return cls(path_params, query_params, headers, body, cookies, raw_event=event)
 
 
 class ResponseAPIGateway:
@@ -93,11 +91,8 @@ class ResponseAPIGateway:
 
 
 class RequestSQS:
-    """
-    https://docs.aws.amazon.com/lambda/latest/dg/with-sqs-example.html#with-sqs-create-test-function
-    """
-
-    def __init__(self, records: list[dict[str, typing.Any]]):
+    def __init__(self, records: list[dict[str, typing.Any]], raw_event: dict[str, typing.Any]):
+        self._raw_event = SQSEvent(**raw_event)
         self._records = records
         self.path_params = None
         self.query_params = None
@@ -110,7 +105,7 @@ class RequestSQS:
         Create a RequestAPIGateway object from the AWS API Gateway event.
         """
 
-        return cls(event["Records"])
+        return cls(event["Records"], raw_event=event)
 
     def json(self):
         """
@@ -127,12 +122,8 @@ class RequestSQS:
 
 
 class RequestJob:
-    """
-    https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-run-lambda-schedule.html#eb-schedule-create-rule
-    """
-
-    def __init__(self, event: dict[str, typing.Any]):
-        self._event = event
+    def __init__(self, raw_event: dict[str, typing.Any]):
+        self._raw_event = JobEvent(**raw_event)
         self.path_params = None
         self.query_params = None
         self.headers = None

@@ -59,7 +59,7 @@ class Route:
             matched_params = match.groupdict()
             for key, value in matched_params.items():
                 matched_params[key] = self.param_convertors[key].convert(value)
-            path_params = dict(scope.get("pathParameters", {}))
+            path_params = dict(scope.get("pathParameters", {}) or {})
             path_params.update(matched_params)
             child_scope = {"pathParameters": path_params}
 

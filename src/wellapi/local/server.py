@@ -98,10 +98,36 @@ def get_request_handler(router: Router):
                 headers.setdefault(key, []).append(value)
 
             event = {
+                "version": "1.0",
+                "resource": "/my/path",
                 "httpMethod": method,
                 "path": path,
                 "multiValueHeaders": headers,
                 "body": body,
+                "headers": {},
+                "queryStringParameters": {},
+                "requestContext": {
+                    'resourceId': 'zdo27u',
+                    'resourcePath': path,
+                    'operationName': 'main.hello',
+                    'httpMethod': method,
+                    'extendedRequestId': 'J449EG3OliAEceQ=',
+                    'requestTime': '01/May/2025:12:53:13 +0000',
+                    'path': '/prod/hello',
+                    'accountId': '125905311728',
+                    'protocol': 'HTTP/1.1',
+                    'stage': 'prod',
+                    'domainPrefix': 'pxeuu259g4',
+                    'requestTimeEpoch': 1746103993615,
+                    'requestId': '00cc795f-6b70-4f4d-9d7f-1800b9af134e',
+                    'identity': {},
+                    'domainName': 'pxeuu259g4.execute-api.eu-central-1.amazonaws.com',
+                    'deploymentId': 'q4efka',
+                    'apiId': 'pxeuu259g4'
+                },
+                "pathParameters": None,
+                "stageVariables": None,
+                "isBase64Encoded": False,
             }
 
             # Парсимо query параметри
@@ -113,6 +139,8 @@ def get_request_handler(router: Router):
                         key, value = param.split("=")
                         query_params.setdefault(key, []).append(value)
                 event["multiValueQueryStringParameters"] = query_params
+            else:
+                event["multiValueQueryStringParameters"] = {}
 
             return event
 
