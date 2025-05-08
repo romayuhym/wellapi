@@ -18,6 +18,8 @@ from wellapi.dependencies.utils import (
     get_parameterless_sub_dependant,
     get_typed_return_annotation,
 )
+from wellapi.exception_handlers import http_exception_handler, request_validation_exception_handler
+from wellapi.exceptions import HTTPException, RequestValidationError
 from wellapi.middleware.base import BaseMiddleware
 from wellapi.middleware.error import ServerErrorMiddleware
 from wellapi.middleware.exceptions import ExceptionMiddleware
@@ -196,6 +198,10 @@ class WellApi:
     ):
         self.lambdas = []
         self.exception_handlers = {}
+        self.exception_handlers.setdefault(HTTPException, http_exception_handler)
+        self.exception_handlers.setdefault(
+            RequestValidationError, request_validation_exception_handler
+        )
         self.user_middleware = []
         self.debug = debug
         self.title = title
