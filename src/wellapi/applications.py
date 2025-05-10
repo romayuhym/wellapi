@@ -164,7 +164,7 @@ class Lambda:
         )
         self.body_field = get_body_field(
             flat_dependant=self._flat_dependant,
-            name=self.unique_id,
+            name=self.arn,
             embed_body_fields=self._embed_body_fields,
         )
         self.app = self.get_route_handler()
