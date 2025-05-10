@@ -85,7 +85,7 @@ class WellApiCDK(Construct):
         ]
         code_layer = _lambda.Code.from_asset(APP_LAYOUT_FILE)
 
-        lambda_role = iam.Role(
+        self.lambda_role = iam.Role(
             self,
             "LambdaRole",
             assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
@@ -111,7 +111,7 @@ class WellApiCDK(Construct):
                 vpc_subnets=vpc_subnets,
                 security_groups=sg,
                 environment=environment,
-                role=lambda_role
+                role=self.lambda_role
             )
 
             if lmbd.type_ == "endpoint":
