@@ -79,6 +79,8 @@ class ResponseAPIGateway:
     def to_aws_response(self):
         if isinstance(self.body, str):
             body = self.body
+        elif self.body is None:
+            body = None
         else:
             body = json.dumps(self.body)
 

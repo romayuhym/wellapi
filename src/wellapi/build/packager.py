@@ -56,9 +56,10 @@ def create_zip(file_name: str, dir_name: str):
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as z:
         for path in Path(dir_name).rglob("*"):
             if (
-                str(path).startswith(".venv/")
-                or str(path).startswith("cdk.out/")
-                or str(path).startswith("wellapi.out/")
+                str(path).startswith(".venv")
+                or str(path).startswith("cdk.out")
+                or "__pycache__" in str(path)
+                or str(path) == file_name
             ):
                 continue
             z.write(path, path.relative_to(Path(dir_name).parent))
