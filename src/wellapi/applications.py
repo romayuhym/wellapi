@@ -18,7 +18,10 @@ from wellapi.dependencies.utils import (
     get_parameterless_sub_dependant,
     get_typed_return_annotation,
 )
-from wellapi.exception_handlers import http_exception_handler, request_validation_exception_handler
+from wellapi.exception_handlers import (
+    http_exception_handler,
+    request_validation_exception_handler,
+)
 from wellapi.exceptions import HTTPException, RequestValidationError
 from wellapi.middleware.base import BaseMiddleware
 from wellapi.middleware.error import ServerErrorMiddleware
@@ -263,8 +266,8 @@ class WellApi:
 
         return decorator
 
-    def add_middleware(self, middleware_class, dispatch) -> None:
-        self.user_middleware.insert(0, Middleware(middleware_class, dispatch))
+    def add_middleware(self, middleware_class, *args, **kwargs) -> None:
+        self.user_middleware.insert(0, Middleware(middleware_class, *args, **kwargs))
 
     def middleware(self) -> Callable:
         def decorator(func):

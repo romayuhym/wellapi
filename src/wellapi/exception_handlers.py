@@ -1,5 +1,5 @@
-from wellapi.models import RequestAPIGateway, ResponseAPIGateway
 from wellapi.exceptions import HTTPException, RequestValidationError
+from wellapi.models import RequestAPIGateway, ResponseAPIGateway
 
 
 def http_exception_handler(request: RequestAPIGateway, exc: HTTPException) -> ResponseAPIGateway:

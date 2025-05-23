@@ -1,7 +1,7 @@
 import json
 import typing
 
-from wellapi.awsmodel import JobEvent, SQSEvent, ApiGatewayEvent
+from wellapi.awsmodel import ApiGatewayEvent, JobEvent, SQSEvent
 from wellapi.datastructures import Headers, MutableHeaders, QueryParams
 
 
