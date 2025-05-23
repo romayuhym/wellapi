@@ -19,6 +19,9 @@ def get_request_handler(router: Router):
         def do_PUT(self):
             self._handle_request("PUT")
 
+        def do_PATCH(self):
+            self._handle_request("PATCH")
+
         def do_DELETE(self):
             self._handle_request("DELETE")
 
