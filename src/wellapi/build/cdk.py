@@ -29,7 +29,7 @@ DEP_LAYOUT_FILE = "layer_content.zip"
 
 class WellApiCDK(Construct):
     """
-    This class is used to create a Well API using AWS CDK.
+    This class is used to create a WellAPI using AWS CDK.
     """
 
     def __init__(
@@ -46,17 +46,22 @@ class WellApiCDK(Construct):
         cors: bool = False,
         cache_enable: bool = False,
         log_enable: bool = False,
+        prefix: str | None = None,
     ) -> None:
         super().__init__(scope, id_)
+
+        if prefix is None:
+            prefix = ""
 
         self.app_srt = app_srt
         self.handlers_dir = os.path.abspath(handlers_dir)
 
+        role_name = prefix + "WellApiRole"
         api_role = iam.Role(
             self,
             "WellApiRole",
             assumed_by=iam.ServicePrincipal("apigateway.amazonaws.com"),
-            role_name="WellApiRole",
+            role_name=role_name,
         )
         api_role.add_to_policy(
             iam.PolicyStatement(
@@ -67,7 +72,7 @@ class WellApiCDK(Construct):
         cfn_role: iam.CfnRole = api_role.node.default_child  # type: ignore
         cfn_role.override_logical_id("WellApiRole")
 
-        wellapi_app: WellApi = self._package_app(cors=cors)
+        wellapi_app: WellApi = self._package_app(role_name=role_name, cors=cors)
 
         self._create_api(wellapi_app, cache_enable=cache_enable, log_enable=log_enable)
 
@@ -235,7 +240,7 @@ class WellApiCDK(Construct):
         )
         self.usage_plan.add_api_key(self.api_key)
 
-    def _package_app(self, cors: bool = False) -> WellApi:
+    def _package_app(self, role_name: str, cors: bool = False) -> WellApi:
         wellapi_app = import_app(self.app_srt)
         load_handlers(self.handlers_dir)
 
@@ -248,6 +253,7 @@ class WellApiCDK(Construct):
             tags=wellapi_app.openapi_tags,
             servers=wellapi_app.servers,
             cors=cors,
+            role_name=role_name,
         )
         with open(OPENAPI_FILE, "w") as f:
             json.dump(resp, f)
