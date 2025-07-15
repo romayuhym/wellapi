@@ -34,6 +34,9 @@ def load_handlers(handlers_dir: str):
             continue
 
         module_name = f"{handlers_module}.{file_path.stem}"
+        if module_name in sys.modules:
+            del sys.modules[module_name]
+
         try:
             importlib.import_module(module_name)
         except ImportError as e:

@@ -170,7 +170,7 @@ class Server:
 
     def on_reload(self):
         for module_name in list(sys.modules.keys()):
-            if self.handlers_module in module_name or module_name == self.app_module:
+            if module_name == self.app_module:
                 del sys.modules[module_name]
 
         self.router.discover_handlers(self.app_srt, self.handlers_dir)
