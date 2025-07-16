@@ -169,10 +169,6 @@ class Server:
         threading.Thread(target=self.server.serve_forever, daemon=True).start()
 
     def on_reload(self):
-        for module_name in list(sys.modules.keys()):
-            if module_name == self.app_module:
-                del sys.modules[module_name]
-
         self.router.discover_handlers(self.app_srt, self.handlers_dir)
 
 

@@ -4,7 +4,7 @@ from enum import Enum
 
 from wellapi.applications import Lambda
 from wellapi.routing import compile_path
-from wellapi.utils import import_app, load_handlers
+from wellapi.utils import import_app
 
 
 class Match(Enum):
@@ -79,8 +79,7 @@ class Router:
         return route
 
     def discover_handlers(self, app_srt, path_to_handlers_dir):
-        app = import_app(app_srt)
-        load_handlers(path_to_handlers_dir)
+        app = import_app(app_srt, path_to_handlers_dir)
 
         self.routes = []
         e: Lambda

@@ -2,6 +2,7 @@ import json
 import os
 
 # ruff: noqa: I001
+import aws_cdk as core
 from aws_cdk import (
     Fn,
     Duration,
@@ -18,9 +19,8 @@ from aws_cdk import (
 from constructs import Construct
 
 from wellapi.applications import Lambda, WellApi
-from wellapi.build.packager import package
-from wellapi.openapi.utils import get_openapi
-from wellapi.utils import import_app, load_handlers
+from wellapi.build.packager import OpenAPIBundling, PackageBundling
+from wellapi.utils import import_app
 
 OPENAPI_FILE = "openapi-spec.json"
 APP_LAYOUT_FILE = "app_content.zip"
@@ -72,23 +72,74 @@ class WellApiCDK(Construct):
         cfn_role: iam.CfnRole = api_role.node.default_child  # type: ignore
         cfn_role.override_logical_id("WellApiRole")
 
-        wellapi_app: WellApi = self._package_app(role_name=role_name, cors=cors)
+        wellapi_app: WellApi = import_app(self.app_srt, self.handlers_dir)
 
-        self._create_api(wellapi_app, cache_enable=cache_enable, log_enable=log_enable)
+        self._create_api(wellapi_app, cache_enable=cache_enable, log_enable=log_enable, cors=cors, role_name=role_name)
 
         for q in wellapi_app.queues:
             queue = sqs.Queue(self, f"{q.queue_name}Queue", queue_name=q.queue_name)
+
+        shared_layer_asset = s3_assets.Asset(
+            self,
+            "SharedLayerAsset",
+            path=".",
+            bundling=core.BundlingOptions(
+                local=PackageBundling(  # type: ignore
+                    target="dep",
+                    zip_name=DEP_LAYOUT_FILE,
+                ),
+                image=core.DockerImage.from_registry("ghcr.io/astral-sh/uv:python3.12-alpine"),
+                command=[
+                    "sh",
+                    "-c",
+                    "uv sync --all-groups"
+                    f"wellapi build dep {DEP_LAYOUT_FILE}",
+                    f"cp {DEP_LAYOUT_FILE} /asset-output/"
+                ],
+                output_type=core.BundlingOutput.ARCHIVED,
+            )
+        )
 
         shared_layer = [
             _lambda.LayerVersion(
                 self,
                 "SharedLayer",
-                code=_lambda.Code.from_asset(DEP_LAYOUT_FILE),
+                code=_lambda.Code.from_bucket(
+                    bucket=shared_layer_asset.bucket,
+                    key=shared_layer_asset.s3_object_key,
+                ),
                 compatible_runtimes=[_lambda.Runtime.PYTHON_3_12],  # type: ignore
                 layer_version_name="shared_layer",
             )
         ]
-        code_layer = _lambda.Code.from_asset(APP_LAYOUT_FILE)
+
+        code_asset = s3_assets.Asset(
+            self,
+            "CodeAsset",
+            path=".",
+            bundling=core.BundlingOptions(
+                bundling=core.BundlingOptions(
+                    local=PackageBundling(  # type: ignore
+                        target="app",
+                        zip_name=APP_LAYOUT_FILE,
+                    ),
+                    image=core.DockerImage.from_registry(
+                        "ghcr.io/astral-sh/uv:python3.12-alpine"),
+                    command=[
+                        "sh",
+                        "-c",
+                        "uv sync --all-groups"
+                        f"wellapi build app {APP_LAYOUT_FILE}",
+                        f"cp {APP_LAYOUT_FILE} /asset-output/"
+                    ],
+                    output_type=core.BundlingOutput.ARCHIVED,
+                )
+            )
+        )
+        code_layer = _lambda.Code.from_bucket(
+            bucket=code_asset.bucket,
+            key=code_asset.s3_object_key,
+        )
 
         self.lambda_role = iam.Role(
             self,
@@ -146,10 +197,37 @@ class WellApiCDK(Construct):
                 rule.add_target(targets.LambdaFunction(lambda_function))  # type: ignore
 
     def _create_api(
-        self, wellapi_app: WellApi, cache_enable: bool = False, log_enable: bool = False
+        self,
+        wellapi_app: WellApi,
+        cors: bool,
+        role_name: str,
+        cache_enable: bool = False,
+        log_enable: bool = False
     ) -> None:
         # defining a Cfn Asset from the openAPI file
-        open_api_asset = s3_assets.Asset(self, "OpenApiAsset", path=OPENAPI_FILE)
+        open_api_asset = s3_assets.Asset(
+            self,
+            "OpenApiAsset",
+            path=".",
+            bundling=core.BundlingOptions(
+                local=OpenAPIBundling(  # type: ignore
+                    app_srt=self.app_srt,
+                    handlers_dir=self.handlers_dir,
+                    cors=cors,
+                    role_name=role_name,
+                    openapi_file=OPENAPI_FILE,
+                ),
+                image=core.DockerImage.from_registry("ghcr.io/astral-sh/uv:python3.12-alpine"),
+                command=[
+                    "sh",
+                    "-c",
+                    "uv sync --all-groups"
+                    f"wellapi openapi {self.app_srt} {self.handlers_dir} --output {OPENAPI_FILE} --cors {cors} --role_name {role_name}",
+                    f"cp {OPENAPI_FILE} /asset-output/"
+                ],
+                output_type=core.BundlingOutput.SINGLE_FILE,
+            )
+        )
         transform_map = {"Location": open_api_asset.s3_object_url}
         data = Fn.transform("AWS::Include", transform_map)
 
@@ -239,25 +317,3 @@ class WellApiCDK(Construct):
             ),
         )
         self.usage_plan.add_api_key(self.api_key)
-
-    def _package_app(self, role_name: str, cors: bool = False) -> WellApi:
-        wellapi_app = import_app(self.app_srt)
-        load_handlers(self.handlers_dir)
-
-        resp = get_openapi(
-            title=wellapi_app.title,
-            version=wellapi_app.version,
-            openapi_version="3.0.1",
-            description=wellapi_app.description,
-            lambdas=wellapi_app.lambdas,
-            tags=wellapi_app.openapi_tags,
-            servers=wellapi_app.servers,
-            cors=cors,
-            role_name=role_name,
-        )
-        with open(OPENAPI_FILE, "w") as f:
-            json.dump(resp, f)
-
-        package(DEP_LAYOUT_FILE, APP_LAYOUT_FILE)
-
-        return wellapi_app

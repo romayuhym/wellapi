@@ -1,11 +1,13 @@
 import json
+from typing import Literal
 
 import click
 
 from wellapi import WellApi
+from wellapi.build.packager import package_app, package_dependencies
 from wellapi.local.server import run_local_server
 from wellapi.openapi.utils import get_openapi
-from wellapi.utils import import_app, load_handlers
+from wellapi.utils import import_app
 
 # ruff: noqa: W291
 WELLAPI_ACII = """
@@ -29,9 +31,17 @@ def cli():
 @click.argument(
     "handlers_dir", default="handlers", type=click.Path(exists=True, resolve_path=True)
 )
-def openapi(app_srt: str, handlers_dir: str):
-    app: WellApi = import_app(app_srt)
-    load_handlers(handlers_dir)
+@click.option(
+    "--output", type=click.STRING
+)
+@click.option("--cors", default=False, type=click.BOOL, help="Enable CORS for the API")
+@click.option(
+    "--role_name", default="WellApiRole", type=click.STRING, help="IAM role name for the API"
+)
+def openapi(
+    app_srt: str, handlers_dir: str, openapi_file: str, cors: bool = False, role_name: str = "WellApiRole"
+):
+    app: WellApi = import_app(app_srt, handlers_dir)
 
     resp = get_openapi(
         title=app.title,
@@ -41,11 +51,28 @@ def openapi(app_srt: str, handlers_dir: str):
         lambdas=app.lambdas,
         tags=app.openapi_tags,
         servers=app.servers,
-        cors=False,
+        cors=cors,
+        role_name=role_name,
     )
 
-    with open("openapi.json", "w") as f:
+    with open(openapi_file, "w") as f:
         json.dump(resp, f)
+
+
+@cli.command()
+@click.argument(
+    "target", type=click.Choice(['app', 'dep'])
+)
+@click.argument(
+    "zip_name", type=click.STRING
+)
+def build(target: Literal["app", "dep"], zip_name: str):
+    if target == "dep":
+        package_dependencies(zip_name)
+    elif target == "app":
+        package_app(zip_name)
+    else:
+        raise click.BadParameter("Invalid target. Use 'app' or 'dep'.")
 
 
 @cli.command()
