@@ -118,22 +118,20 @@ class WellApiCDK(Construct):
             "CodeAsset",
             path=".",
             bundling=core.BundlingOptions(
-                bundling=core.BundlingOptions(
-                    local=PackageBundling(  # type: ignore
-                        target="app",
-                        zip_name=APP_LAYOUT_FILE,
-                    ),
-                    image=core.DockerImage.from_registry(
-                        "ghcr.io/astral-sh/uv:python3.12-alpine"),
-                    command=[
-                        "sh",
-                        "-c",
-                        "uv sync --all-groups"
-                        f"wellapi build app {APP_LAYOUT_FILE}",
-                        f"cp {APP_LAYOUT_FILE} /asset-output/"
-                    ],
-                    output_type=core.BundlingOutput.ARCHIVED,
-                )
+                local=PackageBundling(  # type: ignore
+                    target="app",
+                    zip_name=APP_LAYOUT_FILE,
+                ),
+                image=core.DockerImage.from_registry(
+                    "ghcr.io/astral-sh/uv:python3.12-alpine"),
+                command=[
+                    "sh",
+                    "-c",
+                    "uv sync --all-groups"
+                    f"wellapi build app {APP_LAYOUT_FILE}",
+                    f"cp {APP_LAYOUT_FILE} /asset-output/"
+                ],
+                output_type=core.BundlingOutput.ARCHIVED,
             )
         )
         code_layer = _lambda.Code.from_bucket(
