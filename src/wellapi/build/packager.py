@@ -133,7 +133,6 @@ class OpenAPIBundling:
         self.openapi_file = openapi_file
 
     def try_bundle(self, output_dir, *, image, entrypoint=None, command=None, volumes=None, volumesFrom=None, environment=None, workingDirectory=None, user=None, local=None, outputType=None, securityOpt=None, network=None, bundlingFileAccess=None, platform=None) -> bool:
-        print("In OpenAPIBundling try_bundle")
         try:
             app = import_app(self.app_srt, self.handlers_dir)
 
