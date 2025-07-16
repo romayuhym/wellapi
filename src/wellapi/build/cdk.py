@@ -70,7 +70,7 @@ class WellApiCDK(Construct):
             )
         )
         cfn_role: iam.CfnRole = api_role.node.default_child  # type: ignore
-        cfn_role.override_logical_id("WellApiRole")
+        cfn_role.override_logical_id(role_name)
 
         wellapi_app: WellApi = import_app(self.app_srt, self.handlers_dir)
 
