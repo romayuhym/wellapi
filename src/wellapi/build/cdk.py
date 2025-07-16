@@ -59,7 +59,7 @@ class WellApiCDK(Construct):
         role_name = prefix + "WellApiRole"
         api_role = iam.Role(
             self,
-            "WellApiRole",
+            role_name,
             assumed_by=iam.ServicePrincipal("apigateway.amazonaws.com"),
             role_name=role_name,
         )
