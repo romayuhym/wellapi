@@ -39,7 +39,7 @@ def cli():
     "--role_name", default="WellApiRole", type=click.STRING, help="IAM role name for the API"
 )
 def openapi(
-    app_srt: str, handlers_dir: str, openapi_file: str, cors: bool = False, role_name: str = "WellApiRole"
+    app_srt: str, handlers_dir: str, output: str, cors: bool = False, role_name: str = "WellApiRole"
 ):
     app: WellApi = import_app(app_srt, handlers_dir)
 
@@ -55,7 +55,7 @@ def openapi(
         role_name=role_name,
     )
 
-    with open(openapi_file, "w") as f:
+    with open(output, "w") as f:
         json.dump(resp, f)
 
 
