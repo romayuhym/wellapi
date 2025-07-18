@@ -98,7 +98,7 @@ class RequestSQS:
         self._records = records
         self.path_params = None
         self.query_params = None
-        self.headers = None
+        self.headers = {}
         self.cookies = None
 
     @classmethod
@@ -128,7 +128,7 @@ class RequestJob:
         self.raw_event = JobEvent(**raw_event)
         self.path_params = None
         self.query_params = None
-        self.headers = None
+        self.headers = {}
         self.cookies = None
 
     @classmethod
