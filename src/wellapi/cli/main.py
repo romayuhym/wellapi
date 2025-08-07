@@ -5,7 +5,6 @@ import click
 
 from wellapi import WellApi
 from wellapi.build.packager import package_app, package_dependencies
-from wellapi.local.server import run_local_server
 from wellapi.openapi.utils import get_openapi
 from wellapi.utils import import_app
 
@@ -73,22 +72,6 @@ def build(target: Literal["app", "dep"], zip_name: str):
         package_app(zip_name)
     else:
         raise click.BadParameter("Invalid target. Use 'app' or 'dep'.")
-
-
-@cli.command()
-@click.argument("app_srt", default="main:app")
-@click.argument(
-    "handlers_dir", default="handlers", type=click.Path(exists=True, resolve_path=True)
-)
-@click.option("--host", default="127.0.0.1")
-@click.option("--port", default=8000, type=click.INT)
-@click.option(
-    "--autoreload/--no-autoreload",
-    default=True,
-    help="Automatically restart server when code changes.",
-)
-def run(app_srt: str, handlers_dir: str, host="127.0.0.1", port=8000, autoreload=True):
-    run_local_server(app_srt, handlers_dir, host, port, autoreload)
 
 
 if __name__ == "__main__":

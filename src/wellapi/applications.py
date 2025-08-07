@@ -214,6 +214,12 @@ class WellApi:
         self.servers = servers
         self.queues = queues or []
 
+    async def __call__(self, scope, receive, send) -> None:
+        from wellapi.local.server import handel_local
+
+        scope["app"] = self
+        await handel_local(scope, receive, send)
+
     def build_middleware_stack(self, app: Callable) -> Callable:
         debug = self.debug
         error_handler = None

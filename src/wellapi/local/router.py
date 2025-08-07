@@ -4,7 +4,7 @@ from enum import Enum
 
 from wellapi.applications import Lambda
 from wellapi.routing import compile_path
-from wellapi.utils import import_app
+from wellapi.utils import load_handlers
 
 
 class Match(Enum):
@@ -70,20 +70,23 @@ class Route:
 
 
 class Router:
-    def __init__(self):
+    def __init__(self, app=None, path_to_handlers_dir: str | None = None):
         self.routes: list[Route] = []
+        self.app = app
+        self.path_to_handlers_dir = path_to_handlers_dir or "handlers"
+        self.discover_handlers()
 
     def add_route(self, path: str, method: str, function: Callable):
         route = Route(path, function, method)
         self.routes.append(route)
         return route
 
-    def discover_handlers(self, app_srt, path_to_handlers_dir):
-        app = import_app(app_srt, path_to_handlers_dir)
+    def discover_handlers(self):
+        load_handlers(self.path_to_handlers_dir)
 
         self.routes = []
         e: Lambda
-        for e in app.lambdas:
+        for e in self.app.lambdas:
             path = e.path
             method = e.method
             if e.type_ == "queue":
