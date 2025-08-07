@@ -10,7 +10,7 @@ def get_app_config() -> dict:
     with open("pyproject.toml", "rb") as f:
         data = tomllib.load(f)
 
-    return data["wellapi"]
+    return data.get("wellapi", {})
 
 
 async def handel_local(scope, receive, send):
@@ -18,7 +18,7 @@ async def handel_local(scope, receive, send):
 
     if scope["type"] == "lifespan":
         conf = get_app_config()
-        ROUTER = Router(scope["app"], conf["handlers_dir"])
+        ROUTER = Router(scope["app"], conf.get("handlers_dir"))
         return
 
     body = await get_body(receive)
