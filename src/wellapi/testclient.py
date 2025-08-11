@@ -22,6 +22,8 @@ class _TestClientTransport(httpx.ASGITransport):
 
 
 class TestClient(httpx.Client):
+    __test__ = False
+
     def __init__(
         self,
         app,
