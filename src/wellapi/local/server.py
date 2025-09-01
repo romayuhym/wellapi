@@ -1,5 +1,6 @@
 import json
 import tomllib
+from urllib.parse import parse_qsl
 
 from wellapi.local.router import Router
 
@@ -164,10 +165,8 @@ def create_api_event(method, path, body, headers_row, query_string):
     # Парсимо query параметри
     if query_string:
         query_params = {}
-        for param in query_string.split("&"):
-            if "=" in param:
-                key, value = param.split("=")
-                query_params.setdefault(key, []).append(value)
+        for key, value in parse_qsl(query_string, keep_blank_values=True):
+            query_params.setdefault(key, []).append(value)
         event["multiValueQueryStringParameters"] = query_params
     else:
         event["multiValueQueryStringParameters"] = {}
