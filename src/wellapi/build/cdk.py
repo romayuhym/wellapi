@@ -149,6 +149,14 @@ class WellApiCDK(Construct):
             ],
         )
 
+        self.lambda_role.add_to_policy(
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                actions=["sqs:ListQueues", "sqs:SendMessage"],
+                resources=["*"],
+            )
+        )
+
         lmbd: Lambda
         for lmbd in wellapi_app.lambdas:
             lambda_function = _lambda.Function(
