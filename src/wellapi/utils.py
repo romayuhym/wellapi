@@ -8,6 +8,8 @@ def import_app(app: str, handlers_dir: str):
     app_modal, app_name = app.split(":")
     app_path = f"{os.path.abspath(Path(app_modal))}.py"
 
+    sys.path.insert(0, os.path.abspath(Path(app_modal).parent))
+
     spec = importlib.util.spec_from_file_location(app_modal, app_path)
     main = importlib.util.module_from_spec(spec)
     sys.modules[app_modal] = main
