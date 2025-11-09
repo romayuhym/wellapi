@@ -307,7 +307,7 @@ class WellApi:
         self,
         telemetry: Telemetry,
         request_hook: Callable[["Span", RequestAPIGateway], None] | None = None,
-        response_hook: Callable[["Span", ResponseAPIGateway], None] | None = None,
+        response_hook: Callable[["Span", ResponseAPIGateway | None], None] | None = None,
     ) -> None:
         self.telemetry = telemetry
         self.request_hook = request_hook

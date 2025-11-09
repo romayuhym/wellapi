@@ -50,9 +50,7 @@ class Route:
         return f"Route(path={self.path}, method={self.method})"
 
     def __call__(self, *args, **kwargs):
-        os.environ["_HANDLER"] = (
-            f"{'/'.join(self.endpoint_module.split('.'))}.{self.endpoint_name}"
-        )
+        os.environ["_HANDLER"] = f"{self.endpoint_module}.{self.endpoint_name}"
 
         module = sys.modules[self.endpoint_module]
         return getattr(module, self.endpoint_name)(*args, **kwargs)

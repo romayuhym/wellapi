@@ -27,6 +27,7 @@ HEADERS_TO_SKIP = {
     "accept",
     "accept-encoding",
     "cache-control",
+    "cookie",
     "content-length",
     "content-type",
     "host",
@@ -45,14 +46,14 @@ def get_code_attribute() -> dict[str, typing.Any]:
         return {}
 
     try:
-        (mod_name, handler_name) = _HANDLER.rsplit(".", 1)
+        (module, handler_name) = _HANDLER.rsplit(".", 1)
 
-        module = sys.modules[".".join(mod_name.split("/"))]
         lambda_handler = getattr(module, handler_name)
         _, line_number = inspect.getsourcelines(lambda_handler)
+        file_name = "/".join(module.split("."))
 
         return {
-            "code.filepath": f"{mod_name}.py",
+            "code.filepath": f"{file_name}.py",
             "code.function": handler_name,
             "code.lineno": line_number,
         }
@@ -188,7 +189,7 @@ class TelemetryMiddleware:
         next_call: typing.Callable,
         telemetry: Telemetry,
         request_hook: typing.Callable[[Span, RequestAPIGateway], None] | None = None,
-        response_hook: typing.Callable[[Span, ResponseAPIGateway], None] | None = None,
+        response_hook: typing.Callable[[Span, ResponseAPIGateway | None], None] | None = None,
     ) -> None:
         self.next_call = next_call
         self.telemetry = telemetry
