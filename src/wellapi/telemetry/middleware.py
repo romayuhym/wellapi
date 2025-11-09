@@ -46,11 +46,12 @@ def get_code_attribute() -> dict[str, typing.Any]:
         return {}
 
     try:
-        (module, handler_name) = _HANDLER.rsplit(".", 1)
+        (mod_name, handler_name) = _HANDLER.rsplit(".", 1)
 
+        module = sys.modules[mod_name]
         lambda_handler = getattr(module, handler_name)
         _, line_number = inspect.getsourcelines(lambda_handler)
-        file_name = "/".join(module.split("."))
+        file_name = "/".join(mod_name.split("."))
 
         return {
             "code.filepath": f"{file_name}.py",
