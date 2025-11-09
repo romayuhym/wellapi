@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 import html
 import inspect
 import sys
@@ -143,6 +144,7 @@ class ServerErrorMiddleware:
         self.next_call = next_call
         self.handler = handler
         self.debug = debug
+        functools.update_wrapper(self, next_call, updated=())
 
     def __call__(self, request: RequestAPIGateway) -> ResponseAPIGateway:
         try:

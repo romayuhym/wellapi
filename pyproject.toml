@@ -1,6 +1,6 @@
 [project]
 name = "wellapi"
-version = "0.7.5"
+version = "0.8.0"
 description = "A simple web framework for aws lambda"
 readme = "README.md"
 authors = [
@@ -8,9 +8,9 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
-    "pydantic==2.11.3",
-    "typing-extensions>=4.8.0",
-    "email-validator>=2.0.0",
+    "pydantic==2.11.4",
+    "typing-extensions>=4.15.0",
+    "email-validator>=2.3.0",
 ]
 
 [project.scripts]
@@ -18,14 +18,16 @@ wellapi = "wellapi.cli.main:cli"
 
 [project.optional-dependencies]
 deploy = [
-    "aws-cdk-lib>=2.189.1",
+    "aws-cdk-lib>=2.222.0",
     "constructs>=10.0.0",
 ]
 local = [
     "uvicorn==0.35.0",
     "httpx>=0.28.1",
-    "click>=8.1.8",
-    "watchdog>=4.0.2",
+    "click>=8.3.0",
+]
+telemetry = [
+    "opentelemetry-sdk>=1.38.0",
 ]
 
 [build-system]

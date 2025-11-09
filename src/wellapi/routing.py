@@ -1,3 +1,4 @@
+import functools
 import json
 import re
 from collections.abc import Callable
@@ -99,6 +100,7 @@ def get_request_handler(
     else:
         actual_response_class = response_class
 
+    @functools.wraps(dependant.call)
     def app(request: RequestAPIGateway) -> ResponseAPIGateway:
         response: ResponseAPIGateway | None = None
         try:
@@ -233,6 +235,7 @@ def is_body_allowed_for_status_code(status_code: int | str | None) -> bool:
 def request_response(
     func: Callable[[RequestAPIGateway], ResponseAPIGateway],
 ) -> Callable[[dict, dict], dict]:
+    @functools.wraps(func)
     def app(event: dict, context: dict) -> dict:
         if "Records" in event:
             request = RequestSQS.create_request_from_event(event)

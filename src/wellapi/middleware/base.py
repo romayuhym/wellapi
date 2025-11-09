@@ -1,3 +1,4 @@
+import functools
 import typing
 from collections.abc import Callable
 
@@ -8,6 +9,7 @@ class BaseMiddleware:
     def __init__(self, next_call: Callable, dispatch: Callable | None = None) -> None:
         self.next_call = next_call
         self.dispatch_func = self.dispatch if dispatch is None else dispatch
+        functools.update_wrapper(self, next_call, updated=())
 
     def __call__(self, request: RequestAPIGateway) -> ResponseAPIGateway:
         return self.dispatch_func(request, self.next_call)

@@ -1,3 +1,4 @@
+import functools
 import re
 
 from wellapi import RequestAPIGateway, ResponseAPIGateway
@@ -26,8 +27,8 @@ class CORSMiddleware:
         if allow_all_headers:
             simple_headers["Access-Control-Allow-Headers"] = "*"
         elif allow_headers:
-            simple_headers["Access-Control-Allow-Headers"] = (
-                ", ".join([h.lower() for h in allow_headers])
+            simple_headers["Access-Control-Allow-Headers"] = ", ".join(
+                [h.lower() for h in allow_headers]
             )
         if allow_credentials:
             simple_headers["Access-Control-Allow-Credentials"] = "true"
@@ -39,6 +40,7 @@ class CORSMiddleware:
         self.allow_all_origins = allow_all_origins
         self.allow_origin_regex = compiled_allow_origin_regex
         self.simple_headers = simple_headers
+        functools.update_wrapper(self, app, updated=())
 
     def __call__(self, request: RequestAPIGateway) -> ResponseAPIGateway:
         response = self.app(request)

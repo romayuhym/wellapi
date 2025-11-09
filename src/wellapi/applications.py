@@ -1,7 +1,7 @@
 import inspect
 from collections.abc import Callable, Sequence
 from enum import Enum
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 from pydantic._internal._utils import lenient_issubclass
 from pydantic.main import IncEx
@@ -34,6 +34,10 @@ from wellapi.routing import (
     is_body_allowed_for_status_code,
     request_response,
 )
+from wellapi.telemetry.telemetry import Telemetry
+
+if TYPE_CHECKING:
+    from opentelemetry.trace import Span
 
 
 def to_camel_case(snake_str):
@@ -213,6 +217,10 @@ class WellApi:
         self.openapi_tags = openapi_tags
         self.servers = servers
         self.queues = queues or []
+        # Telemetry (optional, only if extras installed)
+        self.telemetry = None
+        self.request_hook = None
+        self.response_hook = None
 
     async def __call__(self, scope, receive, send) -> None:
         from wellapi.local.server import handel_local
@@ -243,6 +251,22 @@ class WellApi:
             ]
         )
 
+        # Insert telemetry just after the server error middleware so it wraps
+        # app logic but still benefits from top-level error handling.
+        if self.telemetry is not None:
+            # Import lazily to avoid requiring telemetry extras unless used.
+            from wellapi.telemetry.middleware import TelemetryMiddleware
+
+            middleware.insert(
+                1,
+                Middleware(
+                    TelemetryMiddleware,
+                    telemetry=self.telemetry,
+                    request_hook=self.request_hook,
+                    response_hook=self.response_hook,
+                ),
+            )
+
         for cls, args, kwargs in reversed(middleware):
             app = cls(app, *args, **kwargs)
         return request_response(app)
@@ -251,10 +275,7 @@ class WellApi:
         lambda_ = Lambda(*args, **kwargs)
         self.lambdas.append(lambda_)
 
-        def endpoint(event, context):
-            return self.build_middleware_stack(lambda_.app)(event, context)
-
-        return endpoint
+        return self.build_middleware_stack(lambda_.app)
 
     def add_exception_handler(
         self,
@@ -281,6 +302,16 @@ class WellApi:
             return func
 
         return decorator
+
+    def use_telemetry(
+        self,
+        telemetry: Telemetry,
+        request_hook: Callable[["Span", RequestAPIGateway], None] | None = None,
+        response_hook: Callable[["Span", ResponseAPIGateway], None] | None = None,
+    ) -> None:
+        self.telemetry = telemetry
+        self.request_hook = request_hook
+        self.response_hook = response_hook
 
     def get(
         self,

@@ -199,6 +199,8 @@ class WellApiCDK(Construct):
                     f"{lmbd.name}Rule",
                     schedule=events.Schedule.expression(lmbd.path),
                 )
+                lambda_function.add_environment("SCHEDULE_EXPRESSION", lmbd.path)
+                lambda_function.add_environment("JOB_NAME", lmbd.name)
 
                 rule.add_target(targets.LambdaFunction(lambda_function))  # type: ignore
 

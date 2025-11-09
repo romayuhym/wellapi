@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 import typing
 
 from wellapi.exceptions import HTTPException
@@ -33,6 +34,8 @@ class ExceptionMiddleware:
         if handlers is not None:  # pragma: no branch
             for key, value in handlers.items():
                 self.add_exception_handler(key, value)
+
+        functools.update_wrapper(self, next_call, updated=())
 
     def add_exception_handler(
         self,

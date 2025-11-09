@@ -152,8 +152,8 @@ def create_api_event(method, path, body, headers_row, query_string):
             'domainPrefix': 'pxeuu259g4',
             'requestTimeEpoch': 1746103993615,
             'requestId': '00cc795f-6b70-4f4d-9d7f-1800b9af134e',
-            'identity': {},
-            'domainName': 'pxeuu259g4.execute-api.eu-central-1.amazonaws.com',
+            'identity': {"sourceIp": "127.0.0.1"},
+            'domainName': 'wellapi.local',
             'deploymentId': 'q4efka',
             'apiId': 'pxeuu259g4'
         },
