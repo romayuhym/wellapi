@@ -202,6 +202,8 @@ class WellApi:
         servers: list[dict[str, str | Any]] | None = None,
         queues: list[dict[str, Any]] | None = None,
         debug: bool = False,
+        memory_size: int = 128,
+        timeout: int = 30,
     ):
         self.lambdas = []
         self.exception_handlers = {}
@@ -217,6 +219,8 @@ class WellApi:
         self.openapi_tags = openapi_tags
         self.servers = servers
         self.queues = queues or []
+        self.memory_size = memory_size
+        self.timeout = timeout
         # Telemetry (optional, only if extras installed)
         self.telemetry = None
         self.request_hook = None
@@ -320,8 +324,8 @@ class WellApi:
         response_model: Any = Default(None),
         status_code: int | None = None,
         cache_parameters: params.Cache | None = None,
-        memory_size: int = 128,
-        timeout: int = 30,
+        memory_size: int | None = None,
+        timeout: int | None = None,
         response_class: type[ResponseAPIGateway] | DefaultPlaceholder = Default(
             ResponseAPIGateway
         ),
@@ -343,8 +347,8 @@ class WellApi:
                 status_code=status_code,
                 method="GET",
                 cache_parameters=cache_parameters,
-                memory_size=memory_size,
-                timeout=timeout,
+                memory_size=memory_size or self.memory_size,
+                timeout=timeout or self.timeout,
                 response_class=response_class,
                 response_model_include=response_model_include,
                 response_model_exclude=response_model_exclude,
@@ -366,8 +370,8 @@ class WellApi:
         response_model: Any = Default(None),
         status_code: int | None = None,
         cache_parameters: params.Cache | None = None,
-        memory_size: int = 128,
-        timeout: int = 30,
+        memory_size: int | None = None,
+        timeout: int | None = None,
         response_class: type[ResponseAPIGateway] | DefaultPlaceholder = Default(
             ResponseAPIGateway
         ),
@@ -389,8 +393,8 @@ class WellApi:
                 status_code=status_code,
                 method="POST",
                 cache_parameters=cache_parameters,
-                memory_size=memory_size,
-                timeout=timeout,
+                memory_size=memory_size or self.memory_size,
+                timeout=timeout or self.timeout,
                 response_class=response_class,
                 response_model_include=response_model_include,
                 response_model_exclude=response_model_exclude,
@@ -412,8 +416,8 @@ class WellApi:
         response_model: Any = Default(None),
         status_code: int | None = None,
         cache_parameters: params.Cache | None = None,
-        memory_size: int = 128,
-        timeout: int = 30,
+        memory_size: int | None = None,
+        timeout: int | None = None,
         response_class: type[ResponseAPIGateway] | DefaultPlaceholder = Default(
             ResponseAPIGateway
         ),
@@ -435,8 +439,8 @@ class WellApi:
                 status_code=status_code,
                 method="PUT",
                 cache_parameters=cache_parameters,
-                memory_size=memory_size,
-                timeout=timeout,
+                memory_size=memory_size or self.memory_size,
+                timeout=timeout or self.timeout,
                 response_class=response_class,
                 response_model_include=response_model_include,
                 response_model_exclude=response_model_exclude,
@@ -458,8 +462,8 @@ class WellApi:
         response_model: Any = Default(None),
         status_code: int | None = None,
         cache_parameters: params.Cache | None = None,
-        memory_size: int = 128,
-        timeout: int = 30,
+        memory_size: int | None = None,
+        timeout: int | None = None,
         response_class: type[ResponseAPIGateway] | DefaultPlaceholder = Default(
             ResponseAPIGateway
         ),
@@ -481,8 +485,8 @@ class WellApi:
                 status_code=status_code,
                 method="PATCH",
                 cache_parameters=cache_parameters,
-                memory_size=memory_size,
-                timeout=timeout,
+                memory_size=memory_size or self.memory_size,
+                timeout=timeout or self.timeout,
                 response_class=response_class,
                 response_model_include=response_model_include,
                 response_model_exclude=response_model_exclude,
@@ -504,8 +508,8 @@ class WellApi:
         response_model: Any = Default(None),
         status_code: int | None = None,
         cache_parameters: params.Cache | None = None,
-        memory_size: int = 128,
-        timeout: int = 30,
+        memory_size: int | None = None,
+        timeout: int | None = None,
         response_class: type[ResponseAPIGateway] | DefaultPlaceholder = Default(
             ResponseAPIGateway
         ),
@@ -527,8 +531,8 @@ class WellApi:
                 status_code=status_code,
                 method="DELETE",
                 cache_parameters=cache_parameters,
-                memory_size=memory_size,
-                timeout=timeout,
+                memory_size=memory_size or self.memory_size,
+                timeout=timeout or self.timeout,
                 response_class=response_class,
                 response_model_include=response_model_include,
                 response_model_exclude=response_model_exclude,
@@ -547,8 +551,8 @@ class WellApi:
         self,
         queue_name: str,
         *,
-        memory_size: int = 128,
-        timeout: int = 30,
+        memory_size: int | None = None,
+        timeout: int | None = None,
         dependencies: Sequence[params.Depends] | None = None,
     ):
         def decorator(func):
@@ -556,8 +560,8 @@ class WellApi:
                 queue_name,
                 func,
                 type_="queue",
-                memory_size=memory_size,
-                timeout=timeout,
+                memory_size=memory_size or self.memory_size,
+                timeout=timeout or self.timeout,
                 dependencies=dependencies,
             )
             return lambda_
@@ -569,7 +573,7 @@ class WellApi:
         expression: str,
         *,
         name: str | None = None,
-        memory_size: int = 128,
+        memory_size: int | None = None,
         timeout: int = 30,
         dependencies: Sequence[params.Depends] | None = None,
     ):
@@ -579,8 +583,8 @@ class WellApi:
                 func,
                 type_="job",
                 name=name,
-                memory_size=memory_size,
-                timeout=timeout,
+                memory_size=memory_size or self.memory_size,
+                timeout=timeout or self.timeout,
                 dependencies=dependencies,
             )
             return lambda_

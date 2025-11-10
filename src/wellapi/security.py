@@ -2,10 +2,10 @@ from typing import Any, cast
 
 from wellapi.exceptions import HTTPException
 from wellapi.models import RequestAPIGateway
-from wellapi.openapi.models import APIKey, APIKeyIn
-from wellapi.openapi.models import OAuth2 as OAuth2Model
-from wellapi.openapi.models import OAuthFlows as OAuthFlowsModel
-from wellapi.openapi.models import SecurityBase as SecurityBaseModel
+from wellapi.openapi.security_model import APIKey, APIKeyIn
+from wellapi.openapi.security_model import OAuth2 as OAuth2Model
+from wellapi.openapi.security_model import OAuthFlows as OAuthFlowsModel
+from wellapi.openapi.security_model import SecurityBase as SecurityBaseModel
 
 
 class SecurityBase:

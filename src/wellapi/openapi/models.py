@@ -1,8 +1,16 @@
 from enum import Enum
-from typing import Annotated, Any, Literal, Optional, Union
+from typing import Annotated, Any, Optional, Union
 
 from pydantic import AnyUrl, BaseModel, EmailStr, Field
 from typing_extensions import TypedDict
+
+from wellapi.openapi.security_model import (
+    APIKey,
+    HTTPBase,
+    HTTPBearer,
+    OAuth2,
+    OpenIdConnect,
+)
 
 METHODS_WITH_BODY = {"GET", "HEAD", "POST", "PUT", "DELETE", "PATCH"}
 REF_PREFIX = "#/components/schemas/"
@@ -282,84 +290,6 @@ class PathItem(BaseModelWithConfig):
     trace: Operation | None = None
     servers: list[Server] | None = None
     parameters: list[Parameter | Reference] | None = None
-
-
-class SecuritySchemeType(Enum):
-    apiKey = "apiKey"
-    http = "http"
-    oauth2 = "oauth2"
-    openIdConnect = "openIdConnect"
-
-
-class SecurityBase(BaseModelWithConfig):
-    type_: SecuritySchemeType = Field(alias="type")
-    description: str | None = None
-
-
-class APIKeyIn(Enum):
-    query = "query"
-    header = "header"
-    cookie = "cookie"
-
-
-class APIKey(SecurityBase):
-    type_: SecuritySchemeType = Field(default=SecuritySchemeType.apiKey, alias="type")
-    in_: APIKeyIn = Field(alias="in")
-    name: str
-    amazonApiGatewayApiKeySource: str | None = Field(
-        default="HEADER", alias="x-amazon-apigateway-api-key-source"
-    )
-
-
-class HTTPBase(SecurityBase):
-    type_: SecuritySchemeType = Field(default=SecuritySchemeType.http, alias="type")
-    scheme: str
-
-
-class HTTPBearer(HTTPBase):
-    scheme: Literal["bearer"] = "bearer"
-    bearerFormat: str | None = None
-
-
-class OAuthFlow(BaseModelWithConfig):
-    refreshUrl: str | None = None
-    scopes: dict[str, str] = {}
-
-
-class OAuthFlowImplicit(OAuthFlow):
-    authorizationUrl: str
-
-
-class OAuthFlowPassword(OAuthFlow):
-    tokenUrl: str
-
-
-class OAuthFlowClientCredentials(OAuthFlow):
-    tokenUrl: str
-
-
-class OAuthFlowAuthorizationCode(OAuthFlow):
-    authorizationUrl: str
-    tokenUrl: str
-
-
-class OAuthFlows(BaseModelWithConfig):
-    implicit: OAuthFlowImplicit | None = None
-    password: OAuthFlowPassword | None = None
-    clientCredentials: OAuthFlowClientCredentials | None = None
-    authorizationCode: OAuthFlowAuthorizationCode | None = None
-
-
-class OAuth2(SecurityBase):
-    type_: SecuritySchemeType = Field(default=SecuritySchemeType.oauth2, alias="type")
-    flows: OAuthFlows
-
-
-class OpenIdConnect(SecurityBase):
-    type_: SecuritySchemeType = Field(
-        default=SecuritySchemeType.openIdConnect, alias="type"
-    )
-    openIdConnectUrl: str
 
 
 SecurityScheme = APIKey | HTTPBase | OAuth2 | OpenIdConnect | HTTPBearer

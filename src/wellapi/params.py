@@ -1,13 +1,14 @@
 from collections.abc import Callable, Sequence
 from enum import Enum
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 from pydantic import AliasChoices, AliasPath
 from pydantic.fields import FieldInfo
 from pydantic_core import PydanticUndefined
 from typing_extensions import deprecated
 
-from wellapi.openapi.models import Example, ParameterInType
+if TYPE_CHECKING:
+    from wellapi.openapi.models import Example
 
 _Unset: Any = PydanticUndefined
 
@@ -501,6 +502,9 @@ class Cache:
         self.header = header or []
 
     def __iter__(self):
+        # Use lazy import to avoid heavy imports
+        from wellapi.openapi.models import ParameterInType
+
         res = []
         for p in self.path:
             res.append((p, ParameterInType.path, "path"))
