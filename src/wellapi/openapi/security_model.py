@@ -3,9 +3,11 @@
 from enum import Enum
 from typing import Literal
 
-from pydantic import Field
+from pydantic import BaseModel, Field
 
-from wellapi.openapi.models import BaseModelWithConfig
+
+class BaseModelWithConfig(BaseModel):
+    model_config = {"extra": "allow"}
 
 
 class SecuritySchemeType(Enum):
