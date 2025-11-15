@@ -43,6 +43,6 @@ def load_handlers(handlers_dir: str):
 
         try:
             importlib.import_module(module_name)
-        except ImportError as e:
+        except Exception as e:
             print(f"Помилка імпорту {module_name}: {e}")
             raise e

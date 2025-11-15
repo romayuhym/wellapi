@@ -61,6 +61,7 @@ class Lambda:
         name: str | None = None,
         memory_size: int = 128,
         timeout: int = 30,
+        fifo: bool | None = None,
         response_model: Any = Default(None),
         status_code: int | None = None,
         description: str | None = None,
@@ -87,6 +88,7 @@ class Lambda:
         self.name = endpoint.__name__ if name is None else name
         self.memory_size = memory_size
         self.timeout = timeout
+        self.fifo = fifo
         self.method = method
         self.endpoint = endpoint
         self.cache_parameters = cache_parameters
@@ -553,6 +555,7 @@ class WellApi:
         *,
         memory_size: int | None = None,
         timeout: int | None = None,
+        fifo: bool | None = None,
         dependencies: Sequence[params.Depends] | None = None,
     ):
         def decorator(func):
@@ -562,6 +565,7 @@ class WellApi:
                 type_="queue",
                 memory_size=memory_size or self.memory_size,
                 timeout=timeout or self.timeout,
+                fifo=fifo,
                 dependencies=dependencies,
             )
             return lambda_

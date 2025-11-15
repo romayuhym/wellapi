@@ -186,6 +186,7 @@ class WellApiCDK(Construct):
                     f"{lmbd.name}Queue",
                     queue_name=lmbd.path,
                     visibility_timeout=Duration.seconds(lmbd.timeout),
+                    fifo=lmbd.fifo,
                 )
 
                 sqs_event_source = lambda_event_source.SqsEventSource(queue)  # type: ignore
