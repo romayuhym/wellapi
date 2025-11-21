@@ -62,6 +62,7 @@ class Lambda:
         memory_size: int = 128,
         timeout: int = 30,
         fifo: bool | None = None,
+        warmup: bool | None = None,
         response_model: Any = Default(None),
         status_code: int | None = None,
         description: str | None = None,
@@ -89,6 +90,7 @@ class Lambda:
         self.memory_size = memory_size
         self.timeout = timeout
         self.fifo = fifo
+        self.warmup = warmup
         self.method = method
         self.endpoint = endpoint
         self.cache_parameters = cache_parameters
@@ -328,6 +330,8 @@ class WellApi:
         cache_parameters: params.Cache | None = None,
         memory_size: int | None = None,
         timeout: int | None = None,
+        warmup: bool | None = None,
+        responses: dict[int | str, dict[str, Any]] | None = None,
         response_class: type[ResponseAPIGateway] | DefaultPlaceholder = Default(
             ResponseAPIGateway
         ),
@@ -351,6 +355,8 @@ class WellApi:
                 cache_parameters=cache_parameters,
                 memory_size=memory_size or self.memory_size,
                 timeout=timeout or self.timeout,
+                warmup=warmup,
+                responses=responses,
                 response_class=response_class,
                 response_model_include=response_model_include,
                 response_model_exclude=response_model_exclude,
@@ -374,6 +380,8 @@ class WellApi:
         cache_parameters: params.Cache | None = None,
         memory_size: int | None = None,
         timeout: int | None = None,
+        warmup: bool | None = None,
+        responses: dict[int | str, dict[str, Any]] | None = None,
         response_class: type[ResponseAPIGateway] | DefaultPlaceholder = Default(
             ResponseAPIGateway
         ),
@@ -397,6 +405,8 @@ class WellApi:
                 cache_parameters=cache_parameters,
                 memory_size=memory_size or self.memory_size,
                 timeout=timeout or self.timeout,
+                warmup=warmup,
+                responses=responses,
                 response_class=response_class,
                 response_model_include=response_model_include,
                 response_model_exclude=response_model_exclude,
@@ -420,6 +430,8 @@ class WellApi:
         cache_parameters: params.Cache | None = None,
         memory_size: int | None = None,
         timeout: int | None = None,
+        warmup: bool | None = None,
+        responses: dict[int | str, dict[str, Any]] | None = None,
         response_class: type[ResponseAPIGateway] | DefaultPlaceholder = Default(
             ResponseAPIGateway
         ),
@@ -443,6 +455,8 @@ class WellApi:
                 cache_parameters=cache_parameters,
                 memory_size=memory_size or self.memory_size,
                 timeout=timeout or self.timeout,
+                warmup=warmup,
+                responses=responses,
                 response_class=response_class,
                 response_model_include=response_model_include,
                 response_model_exclude=response_model_exclude,
@@ -466,6 +480,8 @@ class WellApi:
         cache_parameters: params.Cache | None = None,
         memory_size: int | None = None,
         timeout: int | None = None,
+        warmup: bool | None = None,
+        responses: dict[int | str, dict[str, Any]] | None = None,
         response_class: type[ResponseAPIGateway] | DefaultPlaceholder = Default(
             ResponseAPIGateway
         ),
@@ -489,6 +505,8 @@ class WellApi:
                 cache_parameters=cache_parameters,
                 memory_size=memory_size or self.memory_size,
                 timeout=timeout or self.timeout,
+                warmup=warmup,
+                responses=responses,
                 response_class=response_class,
                 response_model_include=response_model_include,
                 response_model_exclude=response_model_exclude,
@@ -512,6 +530,8 @@ class WellApi:
         cache_parameters: params.Cache | None = None,
         memory_size: int | None = None,
         timeout: int | None = None,
+        warmup: bool | None = None,
+        responses: dict[int | str, dict[str, Any]] | None = None,
         response_class: type[ResponseAPIGateway] | DefaultPlaceholder = Default(
             ResponseAPIGateway
         ),
@@ -535,6 +555,8 @@ class WellApi:
                 cache_parameters=cache_parameters,
                 memory_size=memory_size or self.memory_size,
                 timeout=timeout or self.timeout,
+                warmup=warmup,
+                responses=responses,
                 response_class=response_class,
                 response_model_include=response_model_include,
                 response_model_exclude=response_model_exclude,

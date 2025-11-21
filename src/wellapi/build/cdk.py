@@ -180,6 +180,22 @@ class WellApiCDK(Construct):
                 cfn_lambda: _lambda.CfnFunction = lambda_function.node.default_child  # type: ignore
                 cfn_lambda.override_logical_id(f"{lmbd.arn}Function")
 
+                if lmbd.warmup:
+                    rule = events.Rule(
+                        self,
+                        f"{lmbd.arn}Rule",
+                        schedule=events.Schedule.expression("rate(3 minutes)"),
+                        description="Warm up the Lambda function",
+                    )
+
+                    rule.add_target(
+                        targets.LambdaFunction(
+                            handler=lambda_function,  # type: ignore
+                            event=events.RuleTargetInput.from_object({"warmup": True}),
+                        )
+                    )
+
+
             if lmbd.type_ == "queue":
                 queue = sqs.Queue(
                     self,

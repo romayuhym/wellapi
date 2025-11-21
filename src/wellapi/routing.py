@@ -237,6 +237,9 @@ def request_response(
 ) -> Callable[[dict, dict], dict]:
     @functools.wraps(func)
     def app(event: dict, context: dict) -> dict:
+        if event.get("warmup"):
+            return {"statusCode": 200, "body": "warmed"}
+
         if "Records" in event:
             request = RequestSQS.create_request_from_event(event)
         elif "source" in event and event["source"] == "aws.events":
