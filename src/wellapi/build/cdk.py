@@ -200,7 +200,7 @@ class WellApiCDK(Construct):
                 queue = sqs.Queue(
                     self,
                     f"{lmbd.name}Queue",
-                    queue_name=lmbd.path,
+                    queue_name=f"{lmbd.path}.fifo" if lmbd.fifo else lmbd.path,
                     visibility_timeout=Duration.seconds(lmbd.timeout),
                     fifo=lmbd.fifo,
                 )
