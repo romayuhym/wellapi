@@ -50,6 +50,9 @@ def get_arn(endpoint: Callable[..., Any]) -> str:
     return to_camel_case(name)
 
 
+LAMBDA_ALIAS = "warmup"
+
+
 class Lambda:
     def __init__(
         self,
@@ -208,6 +211,7 @@ class WellApi:
         debug: bool = False,
         memory_size: int = 128,
         timeout: int = 30,
+        use_snap_start: bool | None = None,
     ):
         self.lambdas = []
         self.exception_handlers = {}
@@ -225,6 +229,7 @@ class WellApi:
         self.queues = queues or []
         self.memory_size = memory_size
         self.timeout = timeout
+        self.use_snap_start = use_snap_start
         # Telemetry (optional, only if extras installed)
         self.telemetry = None
         self.request_hook = None
@@ -355,7 +360,7 @@ class WellApi:
                 cache_parameters=cache_parameters,
                 memory_size=memory_size or self.memory_size,
                 timeout=timeout or self.timeout,
-                warmup=warmup,
+                warmup=warmup if isinstance(warmup, bool) else self.use_snap_start,
                 responses=responses,
                 response_class=response_class,
                 response_model_include=response_model_include,
@@ -405,7 +410,7 @@ class WellApi:
                 cache_parameters=cache_parameters,
                 memory_size=memory_size or self.memory_size,
                 timeout=timeout or self.timeout,
-                warmup=warmup,
+                warmup=warmup if isinstance(warmup, bool) else self.use_snap_start,
                 responses=responses,
                 response_class=response_class,
                 response_model_include=response_model_include,
@@ -455,7 +460,7 @@ class WellApi:
                 cache_parameters=cache_parameters,
                 memory_size=memory_size or self.memory_size,
                 timeout=timeout or self.timeout,
-                warmup=warmup,
+                warmup=warmup if isinstance(warmup, bool) else self.use_snap_start,
                 responses=responses,
                 response_class=response_class,
                 response_model_include=response_model_include,
@@ -505,7 +510,7 @@ class WellApi:
                 cache_parameters=cache_parameters,
                 memory_size=memory_size or self.memory_size,
                 timeout=timeout or self.timeout,
-                warmup=warmup,
+                warmup=warmup if isinstance(warmup, bool) else self.use_snap_start,
                 responses=responses,
                 response_class=response_class,
                 response_model_include=response_model_include,
@@ -555,7 +560,7 @@ class WellApi:
                 cache_parameters=cache_parameters,
                 memory_size=memory_size or self.memory_size,
                 timeout=timeout or self.timeout,
-                warmup=warmup,
+                warmup=warmup if isinstance(warmup, bool) else self.use_snap_start,
                 responses=responses,
                 response_class=response_class,
                 response_model_include=response_model_include,

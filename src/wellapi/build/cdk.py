@@ -18,7 +18,7 @@ from aws_cdk import (
 )
 from constructs import Construct
 
-from wellapi.applications import Lambda, WellApi
+from wellapi.applications import Lambda, WellApi, LAMBDA_ALIAS
 from wellapi.build.packager import OpenAPIBundling, PackageBundling
 from wellapi.utils import import_app
 
@@ -180,7 +180,8 @@ class WellApiCDK(Construct):
             if lmbd.warmup:
                 # forces a Version artifact
                 version = lambda_function.current_version
-                lambda_function.add_alias("warmup")
+                # https://medium.com/globant/integration-of-snapstart-enabled-lambda-functions-with-api-gateway-bf7ecceb9db8
+                lambda_function.add_alias(LAMBDA_ALIAS)
 
             if lmbd.type_ == "endpoint":
                 cfn_lambda: _lambda.CfnFunction = lambda_function.node.default_child  # type: ignore

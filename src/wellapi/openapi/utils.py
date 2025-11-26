@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from pydantic._internal._utils import lenient_issubclass
 from pydantic.json_schema import GenerateJsonSchema, JsonSchemaValue
 
-from wellapi.applications import Lambda
+from wellapi.applications import Lambda, LAMBDA_ALIAS
 from wellapi.datastructures import DefaultPlaceholder
 from wellapi.dependencies.models import Dependant, ModelField
 from wellapi.dependencies.utils import (
@@ -469,9 +469,12 @@ def get_openapi_operation_metadata(
     if route.deprecated:
         operation["deprecated"] = route.deprecated
 
+    function = f"${{{route.arn}Function.Arn}}"
+    if route.warmup:
+        function += ":" + LAMBDA_ALIAS
     operation["x-amazon-apigateway-integration"] = {
         "uri": {
-            "Fn::Sub": f"arn:aws:apigateway:${{AWS::Region}}:lambda:path/2015-03-31/functions/${{{route.arn}Function.Arn}}{':warmup' if route.warmup else ''}/invocations"
+            "Fn::Sub": f"arn:aws:apigateway:${{AWS::Region}}:lambda:path/2015-03-31/functions/{function}/invocations"
         },
         "passthroughBehavior": "when_no_match",
         "httpMethod": "POST",
