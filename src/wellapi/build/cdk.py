@@ -180,6 +180,7 @@ class WellApiCDK(Construct):
             if lmbd.warmup:
                 # forces a Version artifact
                 version = lambda_function.current_version
+                lambda_function.add_alias("warmup")
 
             if lmbd.type_ == "endpoint":
                 cfn_lambda: _lambda.CfnFunction = lambda_function.node.default_child  # type: ignore

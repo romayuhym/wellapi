@@ -471,7 +471,7 @@ def get_openapi_operation_metadata(
 
     operation["x-amazon-apigateway-integration"] = {
         "uri": {
-            "Fn::Sub": f"arn:aws:apigateway:${{AWS::Region}}:lambda:path/2015-03-31/functions/${{{route.arn}Function.Arn}}/invocations"
+            "Fn::Sub": f"arn:aws:apigateway:${{AWS::Region}}:lambda:path/2015-03-31/functions/${{{route.arn}Function.Arn}}{':warmup' if route.warmup else ''}/invocations"
         },
         "passthroughBehavior": "when_no_match",
         "httpMethod": "POST",
