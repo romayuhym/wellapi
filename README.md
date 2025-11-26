@@ -1,5 +1,7 @@
 # WellAPI
 
+[![pip](https://img.shields.io/pypi/v/wellapi?color=%2334D058)](https://pypi.org/project/wellapi/)
+
 WellAPI is a simple web framework for work with AWS Lambda
 and API Gateway. It is designed to be easy to use and flexible, allowing you to create RESTful APIs quickly and efficiently.
 

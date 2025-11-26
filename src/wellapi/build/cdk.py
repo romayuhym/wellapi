@@ -173,28 +173,17 @@ class WellApiCDK(Construct):
                 vpc_subnets=vpc_subnets,
                 security_groups=sg,
                 environment=environment,
-                role=self.lambda_role
+                role=self.lambda_role,
+                snap_start=_lambda.SnapStartConf.ON_PUBLISHED_VERSIONS if lmbd.warmup else None,
             )
+
+            if lmbd.warmup:
+                # forces a Version artifact
+                version = lambda_function.current_version
 
             if lmbd.type_ == "endpoint":
                 cfn_lambda: _lambda.CfnFunction = lambda_function.node.default_child  # type: ignore
                 cfn_lambda.override_logical_id(f"{lmbd.arn}Function")
-
-                if lmbd.warmup:
-                    rule = events.Rule(
-                        self,
-                        f"{lmbd.arn}Rule",
-                        schedule=events.Schedule.expression("rate(3 minutes)"),
-                        description="Warm up the Lambda function",
-                    )
-
-                    rule.add_target(
-                        targets.LambdaFunction(
-                            handler=lambda_function,  # type: ignore
-                            event=events.RuleTargetInput.from_object({"warmup": True}),
-                        )
-                    )
-
 
             if lmbd.type_ == "queue":
                 queue = sqs.Queue(

@@ -151,7 +151,7 @@ def _get_job_attribute(_: RequestJob) -> RequestAttribute:
     return RequestAttribute(
         method="JOB",
         target=os.environ.get("JOB_NAME", ""),
-        msg_template="{method} {job.name} ({faas.cron})",
+        msg_template="{method} {job.name} [{faas.cron}]",
         tag="job",
         attribute={
             "method": "JOB",
