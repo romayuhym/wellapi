@@ -196,7 +196,11 @@ class WellApiCDK(Construct):
                     fifo=lmbd.fifo,
                 )
 
-                sqs_event_source = lambda_event_source.SqsEventSource(queue)  # type: ignore
+                sqs_event_source = lambda_event_source.SqsEventSource(
+                    queue,  # type: ignore
+                    batch_size=lmbd.batch_size or 10,
+                    max_batching_window=Duration.seconds(lmbd.batch_window) if lmbd.batch_window else None,
+                )
 
                 # Add SQS event source to the Lambda function
                 lambda_function.add_event_source(sqs_event_source)

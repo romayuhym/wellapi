@@ -65,6 +65,8 @@ class Lambda:
         memory_size: int = 128,
         timeout: int = 30,
         fifo: bool | None = None,
+        batch_size: int | None = 10,
+        batch_window: int | None = None,
         warmup: bool | None = None,
         response_model: Any = Default(None),
         status_code: int | None = None,
@@ -93,6 +95,8 @@ class Lambda:
         self.memory_size = memory_size
         self.timeout = timeout
         self.fifo = fifo
+        self.batch_size = batch_size
+        self.batch_window = batch_window
         self.warmup = warmup
         self.method = method
         self.endpoint = endpoint
@@ -583,6 +587,8 @@ class WellApi:
         memory_size: int | None = None,
         timeout: int | None = None,
         fifo: bool | None = None,
+        batch_size: int | None = None,
+        batch_window: int | None = None,
         dependencies: Sequence[params.Depends] | None = None,
     ):
         def decorator(func):
@@ -593,6 +599,8 @@ class WellApi:
                 memory_size=memory_size or self.memory_size,
                 timeout=timeout or self.timeout,
                 fifo=fifo,
+                batch_size=batch_size,
+                batch_window=batch_window,
                 dependencies=dependencies,
             )
             return lambda_
