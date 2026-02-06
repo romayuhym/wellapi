@@ -2,50 +2,103 @@
 
 [![pip](https://img.shields.io/pypi/v/wellapi?color=%2334D058)](https://pypi.org/project/wellapi/)
 
-WellAPI is a simple web framework for work with AWS Lambda
-and API Gateway. It is designed to be easy to use and flexible, allowing you to create RESTful APIs quickly and efficiently.
+WellAPI is a lightweight web framework for building APIs on AWS Lambda and API Gateway.
+
+## Documentation
+
+- Practical usage guide: [`docs/framework-usage.md`](docs/framework-usage.md)
 
 ## Features
-- Simple and intuitive API for defining routes and handling requests
-- Support for middleware functions
-- Automatic request validation and error handling
-- Support for CORS
-- Support for query parameters, path parameters, and request bodies
-- Support for error handling
-- Support for AWS Lambda and API Gateway
+
+- Lambda-first route definitions (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`)
+- Type-based request parsing and validation with Pydantic
+- Dependency injection via `Depends`
+- Middleware and custom exception handlers
+- OpenAPI generation compatible with API Gateway integrations
+- SQS handlers and scheduled job handlers
+- Packaging helpers for Lambda app code and dependency layers
 
 ## Installation
 
-You can install WellAPI using pip:
+Install the base package:
 
 ```bash
-pip instsll wellapi
+pip install wellapi
 ```
 
-## Example
+Install with optional extras:
+
+```bash
+pip install "wellapi[local,deploy,telemetry]"
+```
+
+- `local`: local server/test tooling
+- `deploy`: AWS CDK integration
+- `telemetry`: OpenTelemetry support
+
+## Quick Start
+
+`main.py`:
 
 ```python
 from wellapi import WellApi
 
-app = WellApi()
+app = WellApi(title="My API", version="1.0.0")
 
 @app.get("/hello")
 def hello():
     return {"message": "Hello, World!"}
 ```
 
-## Local development
+Create a `handlers/` directory for additional endpoints if needed:
 
-You can run your WellAPI application locally using the `wellapi` command:
+```text
+handlers/
+  __init__.py
+  users.py
+```
+
+## Local Development
+
+Run with Uvicorn:
 
 ```bash
-wellapi run main:app
+uvicorn main:app --reload
 ```
 
+If your handlers are not in the default `handlers/` directory, configure it in `pyproject.toml`:
 
-## Deploy
+```bash
+[wellapi]
+handlers_dir = "your_handlers_dir"
+```
+
+## CLI
+
+Generate OpenAPI:
+
+```bash
+wellapi openapi main:app handlers --output openapi.json
+```
+
+Enable CORS in OpenAPI output:
+
+```bash
+wellapi openapi main:app handlers --output openapi.json --cors true --role_name WellApiRole
+```
+
+Build deployment artifacts:
+
+```bash
+wellapi build app app.zip
+wellapi build dep deps.zip
+```
+
+## Deploy with AWS CDK
 
 ```python
+from aws_cdk import Stack
+from constructs import Construct
 from wellapi.build.cdk import WellApiCDK
 
 
@@ -53,75 +106,18 @@ class MyStack(Stack):
     def __init__(self, scope: Construct, id_: str, **kwargs) -> None:
         super().__init__(scope, id_, **kwargs)
 
-        app = WellApiCDK(
-            self,
-            "WellApiCDK",
-            app_srt="main:app",
-            handlers_dir="handlers",
-        )
-```
-
-### CORS
-You can enable CORS for your API by setting the `cors` parameter to `True` when creating the `WellApiCDK` instance:
-
-```python
-from wellapi.build.cdk import WellApiCDK
-
-
-class MyStack(Stack):
-    def __init__(self, scope: Construct, id_: str, **kwargs) -> None:
-        super().__init__(scope, id_, **kwargs)
-
-        app = WellApiCDK(
+        WellApiCDK(
             self,
             "WellApiCDK",
             app_srt="main:app",
             handlers_dir="handlers",
             cors=True,
-        )
-```
-
-### Cache
-
-You can enable caching for your API by setting the `cache_enable` parameter to `True` when creating the `WellApiCDK` instance:
-
-```python
-from wellapi.build.cdk import WellApiCDK
-
-
-class MyStack(Stack):
-    def __init__(self, scope: Construct, id_: str, **kwargs) -> None:
-        super().__init__(scope, id_, **kwargs)
-
-        app = WellApiCDK(
-            self,
-            "WellApiCDK",
-            app_srt="main:app",
-            handlers_dir="handlers",
-            cache_enable=True,
-        )
-```
-**!!! WARNING !!!**
-
-Caching support only GET endpoints
-
-### Logging
-
-You can enable logging for your API by setting the `log_enable` parameter to `True` when creating the `WellApiCDK` instance:
-
-```python
-from wellapi.build.cdk import WellApiCDK
-
-
-class MyStack(Stack):
-    def __init__(self, scope: Construct, id_: str, **kwargs) -> None:
-        super().__init__(scope, id_, **kwargs)
-
-        app = WellApiCDK(
-            self,
-            "WellApiCDK",
-            app_srt="main:app",
-            handlers_dir="handlers",
+            cache_enable=False,
             log_enable=True,
         )
 ```
+
+## Notes
+
+- API Gateway cache support applies to `GET` endpoints.
+- For full framework usage (routing, DI, middleware, SQS/jobs, testing), see [`docs/framework-usage.md`](docs/framework-usage.md).
