@@ -36,7 +36,7 @@ async def handel_local(scope, receive, send):
         event = create_api_event(method, path, body, headers, scope["query_string"].decode())
 
     try:
-        result = await asyncio.to_thread(ROUTER(event, method, path))
+        result = await asyncio.to_thread(ROUTER, event, method, path)
 
         await send(
             {
