@@ -1,3 +1,4 @@
+import asyncio
 import json
 import tomllib
 from urllib.parse import parse_qsl
@@ -35,7 +36,7 @@ async def handel_local(scope, receive, send):
         event = create_api_event(method, path, body, headers, scope["query_string"].decode())
 
     try:
-        result = ROUTER(event, method, path)
+        result = await asyncio.to_thread(ROUTER(event, method, path))
 
         await send(
             {
