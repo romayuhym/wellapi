@@ -43,6 +43,7 @@ class WellApiCDK(Construct):
         vpc_subnets = None,
         sg = None,
         environment: dict | None = None,
+        layers: list[str] | None = None,
         cors: bool = False,
         cache_enable: bool = False,
         log_enable: bool = False,
@@ -112,6 +113,15 @@ class WellApiCDK(Construct):
                 layer_version_name="shared_layer",
             )
         ]
+        if layers:
+            for idx, layer in enumerate(layers):
+                shared_layer.append(
+                    _lambda.LayerVersion.from_layer_version_arn(  # type: ignore
+                        self,
+                        f"SharedLayer{idx}",
+                        layer_version_arn=layer,
+                    )
+                )
 
         code_asset = s3_assets.Asset(
             self,

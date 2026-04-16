@@ -95,6 +95,58 @@ wheels = [
 ]
 
 [[package]]
+name = "aws-solutions-constructs-aws-openapigateway-lambda"
+version = "2.101.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "aws-cdk-lib" },
+    { name = "aws-solutions-constructs-core" },
+    { name = "aws-solutions-constructs-resources" },
+    { name = "constructs" },
+    { name = "jsii" },
+    { name = "publication" },
+    { name = "typeguard" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a3/20/6ea30f9dc5b4176d0dd4b763bd2abd2be6972663588154e4ae4c182df572/aws_solutions_constructs_aws_openapigateway_lambda-2.101.0.tar.gz", hash = "sha256:c0858dc179b31c8e578c15f83ed31bf83cfcf9e60fb3873e8a57d2124a92ff88", size = 175371, upload-time = "2026-04-07T14:39:43.439Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/87/91/06bee35dcc6f49cac499004cf8d2b6e31cd3c01996ec9bca554b3cb9b885/aws_solutions_constructs_aws_openapigateway_lambda-2.101.0-py3-none-any.whl", hash = "sha256:178be4d84c004522a8de9aa52629d25d40096224295255d6ae9200112622b27f", size = 174255, upload-time = "2026-04-07T14:38:26.341Z" },
+]
+
+[[package]]
+name = "aws-solutions-constructs-core"
+version = "2.101.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "aws-cdk-cloud-assembly-schema" },
+    { name = "aws-cdk-lib" },
+    { name = "constructs" },
+    { name = "jsii" },
+    { name = "publication" },
+    { name = "typeguard" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/41/bc/ba243e482b9e8663747456debcf9a23b925282c43a9d24a4e4d510fa1009/aws_solutions_constructs_core-2.101.0.tar.gz", hash = "sha256:7664d90493623b0a3a0186798f3bd549fa3c53adcb8228b36bb8f7a2354cb839", size = 929777, upload-time = "2026-04-07T14:39:55.798Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e9/0e/41d93d7e49a8a321cc176b530a22ab429f1a48885deb138cfdc1ce36da96/aws_solutions_constructs_core-2.101.0-py3-none-any.whl", hash = "sha256:59cc1f4e6545f7df3a785651902199c1dc1de0ed62bb4e707ef5d6108bc13bec", size = 928928, upload-time = "2026-04-07T14:38:44.475Z" },
+]
+
+[[package]]
+name = "aws-solutions-constructs-resources"
+version = "2.101.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "aws-cdk-lib" },
+    { name = "aws-solutions-constructs-core" },
+    { name = "constructs" },
+    { name = "jsii" },
+    { name = "publication" },
+    { name = "typeguard" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/84/8c/faea3424f495a55df9fa010ab7f9638127524ae6e8582dad39cdc840420c/aws_solutions_constructs_resources-2.101.0.tar.gz", hash = "sha256:ad977cc02050e673d68bfbd512d08e9f9b3d4a5f445da772f210a30a4be6387a", size = 2090241, upload-time = "2026-04-07T14:39:56.758Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7e/44/003d32009b6fc96385b822e41aee6b21fdb300c5e538a283cfd8443b408c/aws_solutions_constructs_resources-2.101.0-py3-none-any.whl", hash = "sha256:52d6d464f5023df0a4a952a58ca1eff464050309d4a23e9b546da6404eff3395", size = 2089108, upload-time = "2026-04-07T14:38:45.75Z" },
+]
+
+[[package]]
 name = "cattrs"
 version = "24.1.3"
 source = { registry = "https://pypi.org/simple" }
@@ -467,9 +519,10 @@ wheels = [
 
 [[package]]
 name = "wellapi"
-version = "0.9.6"
+version = "0.9.8"
 source = { editable = "." }
 dependencies = [
+    { name = "aws-solutions-constructs-aws-openapigateway-lambda" },
     { name = "email-validator" },
     { name = "pydantic" },
     { name = "typing-extensions" },
@@ -492,6 +545,7 @@ telemetry = [
 [package.metadata]
 requires-dist = [
     { name = "aws-cdk-lib", marker = "extra == 'deploy'", specifier = ">=2.248.0" },
+    { name = "aws-solutions-constructs-aws-openapigateway-lambda", specifier = ">=2.101.0" },
     { name = "click", marker = "extra == 'local'", specifier = ">=8.3.0" },
     { name = "constructs", marker = "extra == 'deploy'", specifier = ">=10.6.0" },
     { name = "email-validator", specifier = ">=2.3.0" },
