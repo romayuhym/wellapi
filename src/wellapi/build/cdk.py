@@ -33,21 +33,21 @@ class WellApiCDK(Construct):
     """
 
     def __init__(
-        self,
-        scope: Construct,
-        id_: str,
-        *,
-        app_srt: str,
-        handlers_dir: str,
-        vpc = None,
-        vpc_subnets = None,
-        sg = None,
-        environment: dict | None = None,
-        layers: list[str] | None = None,
-        cors: bool = False,
-        cache_enable: bool = False,
-        log_enable: bool = False,
-        prefix: str | None = None,
+            self,
+            scope: Construct,
+            id_: str,
+            *,
+            app_srt: str,
+            handlers_dir: str,
+            vpc=None,
+            vpc_subnets=None,
+            sg=None,
+            environment: dict | None = None,
+            layers: list[str] | None = None,
+            cors: bool = False,
+            cache_enable: bool = False,
+            log_enable: bool = False,
+            prefix: str | None = None,
     ) -> None:
         super().__init__(scope, id_)
 
@@ -75,7 +75,8 @@ class WellApiCDK(Construct):
 
         wellapi_app: WellApi = import_app(self.app_srt, self.handlers_dir)
 
-        self._create_api(wellapi_app, cache_enable=cache_enable, log_enable=log_enable, cors=cors, role_name=role_name)
+        self._create_api(wellapi_app, cache_enable=cache_enable, log_enable=log_enable,
+                         cors=cors, role_name=role_name)
 
         for q in wellapi_app.queues:
             queue = sqs.Queue(self, f"{q.queue_name}Queue", queue_name=q.queue_name)
@@ -89,7 +90,8 @@ class WellApiCDK(Construct):
                     target="dep",
                     zip_name=DEP_LAYOUT_FILE,
                 ),
-                image=core.DockerImage.from_registry("ghcr.io/astral-sh/uv:python3.12-alpine"),
+                image=core.DockerImage.from_registry(
+                    "ghcr.io/astral-sh/uv:python3.12-alpine"),
                 command=[
                     "sh",
                     "-c",
@@ -101,7 +103,19 @@ class WellApiCDK(Construct):
             )
         )
 
-        shared_layer = [
+        shared_layer = []
+        if layers:
+            for idx, layer in enumerate(layers):
+                shared_layer.append(
+                    _lambda.LayerVersion.from_layer_version_arn(  # type: ignore
+                        self,
+                        f"SharedLayer{idx}",
+                        layer_version_arn=layer,
+                    )
+                )
+
+        # Order matters for layers, so we add our shared layer after the user provided ones
+        shared_layer.append(
             _lambda.LayerVersion(
                 self,
                 "SharedLayer",
@@ -112,16 +126,7 @@ class WellApiCDK(Construct):
                 compatible_runtimes=[_lambda.Runtime.PYTHON_3_12],  # type: ignore
                 layer_version_name="shared_layer",
             )
-        ]
-        if layers:
-            for idx, layer in enumerate(layers):
-                shared_layer.append(
-                    _lambda.LayerVersion.from_layer_version_arn(  # type: ignore
-                        self,
-                        f"SharedLayer{idx}",
-                        layer_version_arn=layer,
-                    )
-                )
+        )
 
         code_asset = s3_assets.Asset(
             self,
@@ -154,8 +159,10 @@ class WellApiCDK(Construct):
             "LambdaRole",
             assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
             managed_policies=[
-                iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AWSLambdaBasicExecutionRole"),
-                iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AWSLambdaVPCAccessExecutionRole"),
+                iam.ManagedPolicy.from_aws_managed_policy_name(
+                    "service-role/AWSLambdaBasicExecutionRole"),
+                iam.ManagedPolicy.from_aws_managed_policy_name(
+                    "service-role/AWSLambdaVPCAccessExecutionRole"),
             ],
         )
 
@@ -209,7 +216,8 @@ class WellApiCDK(Construct):
                 sqs_event_source = lambda_event_source.SqsEventSource(
                     queue,  # type: ignore
                     batch_size=lmbd.batch_size or 10,
-                    max_batching_window=Duration.seconds(lmbd.batch_window) if lmbd.batch_window else None,
+                    max_batching_window=Duration.seconds(
+                        lmbd.batch_window) if lmbd.batch_window else None,
                 )
 
                 # Add SQS event source to the Lambda function
@@ -227,12 +235,12 @@ class WellApiCDK(Construct):
                 rule.add_target(targets.LambdaFunction(lambda_function))  # type: ignore
 
     def _create_api(
-        self,
-        wellapi_app: WellApi,
-        cors: bool,
-        role_name: str,
-        cache_enable: bool = False,
-        log_enable: bool = False
+            self,
+            wellapi_app: WellApi,
+            cors: bool,
+            role_name: str,
+            cache_enable: bool = False,
+            log_enable: bool = False
     ) -> None:
         # defining a Cfn Asset from the openAPI file
         open_api_asset = s3_assets.Asset(
@@ -247,7 +255,8 @@ class WellApiCDK(Construct):
                     role_name=role_name,
                     openapi_file=OPENAPI_FILE,
                 ),
-                image=core.DockerImage.from_registry("ghcr.io/astral-sh/uv:python3.12-alpine"),
+                image=core.DockerImage.from_registry(
+                    "ghcr.io/astral-sh/uv:python3.12-alpine"),
                 command=[
                     "sh",
                     "-c",
