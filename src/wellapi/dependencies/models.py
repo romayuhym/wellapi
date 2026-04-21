@@ -48,9 +48,19 @@ class ModelField:
         return self.field_info.annotation
 
     def __post_init__(self) -> None:
-        self._type_adapter: TypeAdapter[Any] = TypeAdapter(
-            Annotated[self.field_info.annotation, self.field_info]
+        # Only the annotation and metadata (constraints like Ge/Le/MinLength) are
+        # meaningful for a standalone TypeAdapter. Field-level attributes of
+        # FieldInfo — `alias`, `validation_alias`, `serialization_alias`, `default`
+        # etc. — have no effect inside an `Annotated[...]` wrapped in a TypeAdapter
+        # (Pydantic >= 2.12 emits UnsupportedFieldAttributeWarning for them).
+        # WellAPI consumes those attributes itself via `self.field_info`
+        # (see `alias`, `get_default`).
+        annotation = self.field_info.annotation
+        metadata = self.field_info.metadata
+        type_annotation: Any = (
+            Annotated[tuple([annotation, *metadata])] if metadata else annotation
         )
+        self._type_adapter: TypeAdapter[Any] = TypeAdapter(type_annotation)
 
     def get_default(self) -> Any:
         if self.field_info.is_required():
