@@ -33,21 +33,21 @@ class WellApiCDK(Construct):
     """
 
     def __init__(
-            self,
-            scope: Construct,
-            id_: str,
-            *,
-            app_srt: str,
-            handlers_dir: str,
-            vpc=None,
-            vpc_subnets=None,
-            sg=None,
-            environment: dict | None = None,
-            layers: list[str] | None = None,
-            cors: bool = False,
-            cache_enable: bool = False,
-            log_enable: bool = False,
-            prefix: str | None = None,
+        self,
+        scope: Construct,
+        id_: str,
+        *,
+        app_srt: str,
+        handlers_dir: str,
+        vpc=None,
+        vpc_subnets=None,
+        sg=None,
+        environment: dict | None = None,
+        layers: list[str] | None = None,
+        cors: bool = False,
+        cache_enable: bool = False,
+        log_enable: bool = False,
+        prefix: str | None = None,
     ) -> None:
         super().__init__(scope, id_)
 
@@ -76,10 +76,10 @@ class WellApiCDK(Construct):
         wellapi_app: WellApi = import_app(self.app_srt, self.handlers_dir)
 
         self._create_api(wellapi_app, cache_enable=cache_enable, log_enable=log_enable,
-                         cors=cors, role_name=role_name)
+                         cors=cors, role_name=role_name, prefix=prefix)
 
         for q in wellapi_app.queues:
-            queue = sqs.Queue(self, f"{q.queue_name}Queue", queue_name=q.queue_name)
+            queue = sqs.Queue(self, f"{q.queue_name}Queue", queue_name=f"{prefix}{q.queue_name}")
 
         shared_layer_asset = s3_assets.Asset(
             self,
@@ -190,6 +190,7 @@ class WellApiCDK(Construct):
                 vpc_subnets=vpc_subnets,
                 security_groups=sg,
                 environment=environment,
+                log_retention=logs.RetentionDays.TWO_MONTHS,
                 role=self.lambda_role,
                 snap_start=_lambda.SnapStartConf.ON_PUBLISHED_VERSIONS if lmbd.warmup else None,
             )
@@ -208,7 +209,7 @@ class WellApiCDK(Construct):
                 queue = sqs.Queue(
                     self,
                     f"{lmbd.name}Queue",
-                    queue_name=f"{lmbd.path}.fifo" if lmbd.fifo else lmbd.path,
+                    queue_name=f"{prefix}{lmbd.path}{".fifo" if lmbd.fifo else ""}",
                     visibility_timeout=Duration.seconds(lmbd.timeout),
                     fifo=lmbd.fifo,
                 )
@@ -235,12 +236,13 @@ class WellApiCDK(Construct):
                 rule.add_target(targets.LambdaFunction(lambda_function))  # type: ignore
 
     def _create_api(
-            self,
-            wellapi_app: WellApi,
-            cors: bool,
-            role_name: str,
-            cache_enable: bool = False,
-            log_enable: bool = False
+        self,
+        wellapi_app: WellApi,
+        cors: bool,
+        role_name: str,
+        prefix: str,
+        cache_enable: bool = False,
+        log_enable: bool = False
     ) -> None:
         # defining a Cfn Asset from the openAPI file
         open_api_asset = s3_assets.Asset(
@@ -333,7 +335,7 @@ class WellApiCDK(Construct):
         self.api_key = apigw.ApiKey(
             self,
             "MyApiKey",
-            api_key_name="my-service-key",
+            api_key_name=f"{prefix}ServiceKey",
         )
 
         self.usage_plan = apigw.UsagePlan(
@@ -345,7 +347,7 @@ class WellApiCDK(Construct):
                     stage=self.api.deployment_stage,
                 )
             ],
-            name="MyUsagePlan",
+            name=f"{prefix}UsagePlan",
             quota=apigw.QuotaSettings(
                 limit=10_000,
                 period=apigw.Period.DAY,
