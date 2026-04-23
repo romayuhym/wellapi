@@ -194,7 +194,6 @@ class WellApiCDK(Construct):
                 log_group=logs.LogGroup(
                     self, f"{lmbd.arn}Log", retention=logs.RetentionDays.TWO_MONTHS
                 ),
-                log_retention=logs.RetentionDays.TWO_MONTHS,
                 role=self.lambda_role,
                 snap_start=_lambda.SnapStartConf.ON_PUBLISHED_VERSIONS if lmbd.warmup else None,
             )
