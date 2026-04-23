@@ -79,7 +79,8 @@ class WellApiCDK(Construct):
                          cors=cors, role_name=role_name, prefix=prefix)
 
         for q in wellapi_app.queues:
-            queue = sqs.Queue(self, f"{q.queue_name}Queue", queue_name=f"{prefix}{q.queue_name}")
+            queue = sqs.Queue(self, f"{q.queue_name}Queue",
+                              queue_name=f"{prefix}{q.queue_name}")
 
         shared_layer_asset = s3_assets.Asset(
             self,
@@ -179,7 +180,7 @@ class WellApiCDK(Construct):
             lambda_function = _lambda.Function(
                 self,
                 f"{lmbd.arn}Function",
-                function_name=f"{lmbd.arn}Function",
+                function_name=f"{prefix}{lmbd.arn}Function",
                 runtime=_lambda.Runtime.PYTHON_3_12,  # type: ignore
                 handler=lmbd.unique_id,
                 memory_size=lmbd.memory_size,
@@ -190,6 +191,9 @@ class WellApiCDK(Construct):
                 vpc_subnets=vpc_subnets,
                 security_groups=sg,
                 environment=environment,
+                log_group=logs.LogGroup(
+                    self, f"{lmbd.arn}Log", retention=logs.RetentionDays.TWO_MONTHS
+                ),
                 log_retention=logs.RetentionDays.TWO_MONTHS,
                 role=self.lambda_role,
                 snap_start=_lambda.SnapStartConf.ON_PUBLISHED_VERSIONS if lmbd.warmup else None,
