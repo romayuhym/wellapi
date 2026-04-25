@@ -1,5 +1,6 @@
 import asyncio
 import typing
+from typing import Any
 
 import httpx
 
@@ -44,3 +45,13 @@ class TestClient(httpx.Client):
             headers=headers,
             transport=transport,
         )
+
+    def sqs(
+        self,
+        queue_name: str,
+        body: dict[str, Any] | list[dict[str, Any]],
+    ) -> httpx.Response:
+        return self.post(f"/queue_/{queue_name}", json=body)
+
+    def job(self, name: str) -> httpx.Response:
+        return self.post(f"/job_/{name}")
