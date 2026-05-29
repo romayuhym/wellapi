@@ -1,6 +1,9 @@
+import wellapi.telemetry.attributes as attrs_mod
 from tests.conftest import TRACEPARENT
 from wellapi.telemetry.attributes import (
     RequestAttribute,
+    get_code_attribute,
+    get_invocation_attribute,
     get_request_attribute,
     get_trace_carrier,
 )
@@ -72,3 +75,16 @@ def test_carrier_from_sqs_message_attributes(sqs_request):
 
 def test_carrier_from_job_is_empty(job_request):
     assert get_trace_carrier(job_request) == {}
+
+
+def test_code_attribute_empty_without_handler(monkeypatch):
+    monkeypatch.delenv("_HANDLER", raising=False)
+    assert get_code_attribute() == {}
+
+
+def test_invocation_attribute_coldstart_toggles(monkeypatch):
+    monkeypatch.setattr(attrs_mod, "COLD_START", True)
+    first = get_invocation_attribute()
+    second = get_invocation_attribute()
+    assert first == {"faas.coldstart": True}
+    assert second == {"faas.coldstart": False}

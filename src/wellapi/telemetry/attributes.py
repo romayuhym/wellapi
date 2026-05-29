@@ -1,4 +1,6 @@
+import inspect
 import os
+import sys
 import typing
 
 from pydantic import BaseModel
@@ -102,6 +104,37 @@ def _get_job_attribute(_request: RequestJob) -> RequestAttribute:
             "faas.trigger": "timer",
         },
     )
+
+
+COLD_START = True
+
+
+def get_code_attribute() -> dict[str, typing.Any]:
+    handler = os.environ.get("_HANDLER")
+    if not handler:
+        return {}
+    try:
+        (mod_name, handler_name) = handler.rsplit(".", 1)
+        module = sys.modules[mod_name]
+        lambda_handler = getattr(module, handler_name)
+        _, line_number = inspect.getsourcelines(lambda_handler)
+        file_name = "/".join(mod_name.split("."))
+        return {
+            "code.filepath": f"{file_name}.py",
+            "code.function": handler_name,
+            "code.lineno": line_number,
+        }
+    except (ValueError, OSError, TypeError, AttributeError, KeyError):
+        return {}
+
+
+def get_invocation_attribute() -> dict[str, typing.Any]:
+    """Per-invocation attributes (cold start). Resource-level FaaS attributes
+    live on the Resource, built once in config.py."""
+    global COLD_START
+    cold = COLD_START
+    COLD_START = False
+    return {"faas.coldstart": cold}
 
 
 def get_trace_carrier(
