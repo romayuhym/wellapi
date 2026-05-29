@@ -84,8 +84,21 @@ def job_event():
 
 
 @pytest.fixture
+def api_gateway_event_no_trace(api_gateway_event):
+    event = dict(api_gateway_event)
+    event["headers"] = {"Host": "api.example.com"}
+    event["multiValueHeaders"] = {"Host": ["api.example.com"]}
+    return event
+
+
+@pytest.fixture
 def api_gateway_request(api_gateway_event):
     return RequestAPIGateway.create_request_from_event(api_gateway_event)
+
+
+@pytest.fixture
+def api_gateway_request_no_trace(api_gateway_event_no_trace):
+    return RequestAPIGateway.create_request_from_event(api_gateway_event_no_trace)
 
 
 @pytest.fixture

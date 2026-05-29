@@ -4,7 +4,8 @@ import typing
 
 try:
     from opentelemetry import propagate
-    from opentelemetry.trace import Span, SpanKind
+    from opentelemetry.context import Context
+    from opentelemetry.trace import Link, Span, SpanKind, get_current_span
     from opentelemetry.trace.status import Status, StatusCode
 except ImportError as err:  # pragma: no cover
     raise RuntimeError(
@@ -67,7 +68,14 @@ class TelemetryMiddleware:
         start = time.perf_counter()
 
         attribute = get_request_attribute(request)
-        parent = propagate.extract(get_trace_carrier(request))
+        # Each invocation starts its OWN trace (root span). The inbound trace
+        # context is attached as a link, not used as the parent: a sticky or
+        # shared upstream traceparent would otherwise collapse unrelated
+        # invocations into a single trace_id (warm-container fan-in).
+        upstream = get_current_span(
+            propagate.extract(get_trace_carrier(request))
+        ).get_span_context()
+        links = [Link(upstream)] if upstream.is_valid else None
         span_attributes = {
             **attribute.attributes,
             **get_code_attribute(),
@@ -78,9 +86,10 @@ class TelemetryMiddleware:
         response: ResponseAPIGateway | None = None
         with self.tracer.start_as_current_span(
             attribute.span_name,
-            context=parent,
+            context=Context(),
             kind=_SPAN_KIND.get(attribute.kind, SpanKind.SERVER),
             attributes=span_attributes,
+            links=links,
         ) as span:
             if self.request_hook:
                 self.request_hook(span, request)

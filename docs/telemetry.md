@@ -74,6 +74,17 @@ SERVER  GET /orders/{id}
 Call `use_telemetry()` before `instrument()`. (Reverse order also works — OTel's
 `ProxyTracer` resolves to the global provider at span-creation time.)
 
+## Trace context propagation
+
+Every invocation starts its **own** trace. The inbound W3C trace context — the
+`traceparent` header on API Gateway requests, or the `traceparent` SQS message
+attribute — is attached to the root span as a **span link**, not used as its
+parent. This is deliberate: a sticky or shared upstream `traceparent` (e.g. a
+client that reuses one trace across many calls, or a producer that fans out many
+messages within a single trace) would otherwise collapse unrelated invocations
+into a single `trace_id`. Linking instead of parenting keeps each invocation a
+distinct trace while preserving the correlation back to the caller.
+
 ## Logs
 
 wellapi configures and flushes a `LoggerProvider` but does not attach handlers —

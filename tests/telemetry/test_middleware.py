@@ -63,7 +63,7 @@ def test_span_is_active_in_context(telemetry, api_gateway_request, monkeypatch):
     assert captured["ctx"].span_id == span.context.span_id
 
 
-def test_parent_context_extracted_from_traceparent(
+def test_inbound_traceparent_becomes_link_not_parent(
     telemetry, api_gateway_request, monkeypatch
 ):
     handle, exporter, _ = telemetry
@@ -72,8 +72,40 @@ def test_parent_context_extracted_from_traceparent(
         api_gateway_request
     )
     (span,) = exporter.get_finished_spans()
-    assert span.context.trace_id == TRACE_ID
-    assert span.parent.span_id == PARENT_SPAN_ID
+    # The span starts its own trace instead of inheriting a (possibly sticky)
+    # upstream traceparent that would collapse unrelated requests into one trace.
+    assert span.context.trace_id != TRACE_ID
+    assert span.parent is None
+    # The upstream context is preserved as a link for cross-trace correlation.
+    (link,) = span.links
+    assert link.context.trace_id == TRACE_ID
+    assert link.context.span_id == PARENT_SPAN_ID
+
+
+def test_two_invocations_with_same_traceparent_get_distinct_traces(
+    telemetry, api_gateway_request, monkeypatch
+):
+    handle, exporter, _ = telemetry
+    monkeypatch.setattr(mw_mod, "force_flush", lambda *a, **k: None)
+    mw = TelemetryMiddleware(lambda req: ResponseAPIGateway(status_code=200), handle)
+    mw(api_gateway_request)
+    mw(api_gateway_request)
+    trace_ids = {s.context.trace_id for s in exporter.get_finished_spans()}
+    assert len(trace_ids) == 2
+    assert TRACE_ID not in trace_ids
+
+
+def test_no_inbound_traceparent_starts_root_without_link(
+    telemetry, api_gateway_request_no_trace, monkeypatch
+):
+    handle, exporter, _ = telemetry
+    monkeypatch.setattr(mw_mod, "force_flush", lambda *a, **k: None)
+    TelemetryMiddleware(lambda req: ResponseAPIGateway(status_code=200), handle)(
+        api_gateway_request_no_trace
+    )
+    (span,) = exporter.get_finished_spans()
+    assert span.parent is None
+    assert span.links == ()
 
 
 def test_exception_sets_error_status_and_reraises(
