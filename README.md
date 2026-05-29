@@ -34,7 +34,7 @@ pip install "wellapi[local,deploy,telemetry]"
 
 - `local`: local server/test tooling
 - `deploy`: AWS CDK integration
-- `telemetry`: OpenTelemetry support
+- `telemetry`: native OpenTelemetry support (traces, metrics, logs) — see [docs/telemetry.md](docs/telemetry.md)
 
 ## Quick Start
 

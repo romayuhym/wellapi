@@ -29,6 +29,13 @@ Recommended for local dev + deploy + telemetry:
 pip install "wellapi[local,deploy,telemetry]"
 ```
 
+## Telemetry
+
+wellapi emits native OpenTelemetry signals, designed for AWS Lambda behind a
+collector-only OTel layer. Enable it with `app.use_telemetry()`. See
+[telemetry.md](telemetry.md) for the full guide (infra setup, instrumentors, logs,
+resource attributes).
+
 Python requirement: `3.12+`.
 
 ## 3. Minimal Project Layout
