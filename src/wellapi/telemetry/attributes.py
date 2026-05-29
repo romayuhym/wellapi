@@ -142,7 +142,7 @@ def get_trace_carrier(
 ) -> dict[str, str]:
     """Build a text-map carrier for `propagate.extract` from the inbound event."""
     if isinstance(request, RequestAPIGateway):
-        return {key: value for key, value in request.headers.items()}
+        return dict(request.headers.items())
     if isinstance(request, RequestSQS):
         records = request.raw_event.Records
         if not records:
