@@ -27,6 +27,22 @@ async def handel_local(scope, receive, send):
     method = scope["method"]
     path = scope["path"]
 
+    if method == "OPTIONS":
+        await send(
+            {
+                "type": "http.response.start",
+                "status": 200,
+                "headers": [
+                    [b"content-type", b"application/json"],
+                    [b"access-control-allow-origin", b"*"],
+                    [b"access-control-allow-methods", b"*"],
+                    [b"access-control-allow-headers", b"*"],
+                ],
+            }
+        )
+        await send({"type": "http.response.body", "body": b""})
+        return
+
     if path.startswith("/job_"):
         event = create_job_event()
     elif path.startswith("/queue_"):
@@ -45,7 +61,7 @@ async def handel_local(scope, receive, send):
                 "headers": [
                     [key.encode(), value.encode()]
                     for key, value in result["headers"].items()
-                ],
+                ] + [[b"content-type", b"application/json"]],
             }
         )
         await send({"type": "http.response.body", "body": result["body"].encode()})
