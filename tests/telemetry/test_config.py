@@ -1,9 +1,45 @@
+import random
+
 import wellapi.telemetry.config as config_mod
 from wellapi.telemetry.config import TelemetryHandle, _build_resource
 
 
 def _attrs(resource):
     return dict(resource.attributes)
+
+
+def _ids_after_seed(generator, seed):
+    """IDs a freshly snapshot-restored env would emit: identical frozen
+    module-level random state (the AWS SnapStart failure mode)."""
+    state = random.getstate()
+    try:
+        random.seed(seed)
+        return generator.generate_trace_id(), generator.generate_span_id()
+    finally:
+        random.setstate(state)
+
+
+def test_default_random_id_generator_collides_under_cloned_random_state():
+    # Documents the bug: the OTel default generator draws from the module-level
+    # Mersenne Twister, which SnapStart freezes and shares across restored envs.
+    from opentelemetry.sdk.trace.id_generator import RandomIdGenerator
+
+    gen = RandomIdGenerator()
+    assert _ids_after_seed(gen, 1234) == _ids_after_seed(gen, 1234)
+
+
+def test_snapstart_safe_id_generator_survives_cloned_random_state():
+    gen = config_mod._SystemRandomIdGenerator()
+    # Two envs restored from the same snapshot (same frozen MT state) must still
+    # produce distinct trace/span IDs.
+    assert _ids_after_seed(gen, 1234) != _ids_after_seed(gen, 1234)
+
+
+def test_snapstart_safe_id_generator_marks_trace_id_random():
+    gen = config_mod._SystemRandomIdGenerator()
+    assert gen.is_trace_id_random() is True
+    assert 0 < gen.generate_trace_id() < 2**128
+    assert 0 < gen.generate_span_id() < 2**64
 
 
 def test_resource_uses_faas_env(monkeypatch):
@@ -53,6 +89,9 @@ def test_build_providers_attaches_resource_and_returns_sdk_types():
     assert isinstance(mp, MeterProvider)
     assert isinstance(lp, LoggerProvider)
     assert dict(tp.resource.attributes)["service.name"] == "t"
+    # SnapStart-safe IDs: the tracer provider must not use the default MT-backed
+    # generator, otherwise restored envs emit duplicate trace/span IDs.
+    assert isinstance(tp.id_generator, config_mod._SystemRandomIdGenerator)
 
 
 def test_configure_reuses_existing_sdk_provider(monkeypatch):

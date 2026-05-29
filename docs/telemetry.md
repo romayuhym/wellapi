@@ -74,17 +74,6 @@ SERVER  GET /orders/{id}
 Call `use_telemetry()` before `instrument()`. (Reverse order also works — OTel's
 `ProxyTracer` resolves to the global provider at span-creation time.)
 
-## Trace context propagation
-
-Every invocation starts its **own** trace. The inbound W3C trace context — the
-`traceparent` header on API Gateway requests, or the `traceparent` SQS message
-attribute — is attached to the root span as a **span link**, not used as its
-parent. This is deliberate: a sticky or shared upstream `traceparent` (e.g. a
-client that reuses one trace across many calls, or a producer that fans out many
-messages within a single trace) would otherwise collapse unrelated invocations
-into a single `trace_id`. Linking instead of parenting keeps each invocation a
-distinct trace while preserving the correlation back to the caller.
-
 ## Logs
 
 wellapi configures and flushes a `LoggerProvider` but does not attach handlers —
@@ -117,6 +106,36 @@ conventions): `cloud.provider`, `cloud.platform`, `cloud.region`, `faas.name`,
 to the function name).
 `OTEL_SERVICE_NAME` and `OTEL_RESOURCE_ATTRIBUTES` override these without code
 changes.
+
+## SnapStart and ID uniqueness
+
+When `warmup`/`use_snap_start` is on, the function is published with AWS Lambda
+SnapStart: Lambda boots one environment, snapshots its memory, and restores that
+**same** snapshot into every execution environment. Anything seeded once at init
+is therefore shared by all restored environments.
+
+OpenTelemetry's default ID generator draws trace/span IDs from Python's
+module-level `random` (a Mersenne Twister seeded once at import). Under SnapStart
+that frozen state is cloned, so every restored environment emits the **same
+sequence** of trace/span IDs — you see one `trace_id` reused across unrelated
+requests. wellapi avoids this by configuring the tracer provider with a
+`SystemRandom` (`os.urandom`-backed) ID generator: the kernel CSPRNG is reseeded
+with fresh entropy on restore, so IDs stay unique. No action needed for telemetry.
+
+If your own handlers (or other libraries) rely on the `random` module, `uuid1`,
+or any non-CSPRNG source for uniqueness, they have the same SnapStart hazard.
+Reseed them in an after-restore hook:
+
+```python
+import random
+from snapshot_restore_py import register_after_restore
+
+@register_after_restore
+def _reseed():
+    random.seed()  # pull fresh entropy from the OS after restore
+```
+
+`os.urandom`, `secrets`, and `uuid4` read the kernel CSPRNG and are already safe.
 
 ## Local development
 

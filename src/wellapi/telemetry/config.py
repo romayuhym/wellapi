@@ -1,4 +1,5 @@
 import os
+import random
 from dataclasses import dataclass
 from typing import Any
 
@@ -11,6 +12,37 @@ _INSTALL_HINT = (
     "Install them with:\n"
     "    uv add 'wellapi[telemetry]'"
 )
+
+
+class _SystemRandomIdGenerator:
+    """Trace/span ID generator backed by the kernel CSPRNG (`os.urandom`).
+
+    OpenTelemetry's default `RandomIdGenerator` draws IDs from the module-level
+    Mersenne Twister, which Python seeds once at import. AWS Lambda SnapStart
+    captures that PRNG state in the snapshot and shares it across every restored
+    execution environment, so the default generator emits identical trace/span
+    IDs in lockstep across environments — observed as duplicate `trace_id`s on
+    unrelated requests. The kernel CSPRNG is reseeded with fresh entropy on
+    restore, so `random.SystemRandom` (i.e. `os.urandom`) stays unique. Duck-typed
+    against `opentelemetry.sdk.trace.id_generator.IdGenerator` to avoid importing
+    the SDK at module import time (kept lazy, like the rest of this module)."""
+
+    _rand = random.SystemRandom()
+
+    def generate_span_id(self) -> int:
+        span_id = self._rand.getrandbits(64)
+        while span_id == trace.INVALID_SPAN_ID:
+            span_id = self._rand.getrandbits(64)
+        return span_id
+
+    def generate_trace_id(self) -> int:
+        trace_id = self._rand.getrandbits(128)
+        while trace_id == trace.INVALID_TRACE_ID:
+            trace_id = self._rand.getrandbits(128)
+        return trace_id
+
+    def is_trace_id_random(self) -> bool:
+        return True
 
 
 @dataclass
@@ -73,7 +105,10 @@ def _build_providers(resource: Any) -> tuple[Any, Any, Any]:
 
     # Exporters default to OTEL_EXPORTER_OTLP_ENDPOINT or http://localhost:4318,
     # i.e. the collector-only Lambda layer running on localhost.
-    tracer_provider = TracerProvider(resource=resource)
+    # _SystemRandomIdGenerator keeps IDs unique under SnapStart (see its docstring).
+    tracer_provider = TracerProvider(
+        resource=resource, id_generator=_SystemRandomIdGenerator()
+    )
     tracer_provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))
 
     meter_provider = MeterProvider(
