@@ -546,13 +546,17 @@ git commit -m "feat(telemetry): extract trace-context carrier from events"
 
 - [ ] **Step 1: Write the failing test**
 
-Append to `tests/telemetry/test_attributes.py`:
+Append the test functions below to `tests/telemetry/test_attributes.py`. Put the
+two imports at the TOP of the file with the existing imports (NOT mid-file — a
+mid-file import triggers ruff `E402`):
 
 ```python
+# add at top of file, with the other imports:
 import wellapi.telemetry.attributes as attrs_mod
 from wellapi.telemetry.attributes import get_code_attribute, get_invocation_attribute
+```
 
-
+```python
 def test_code_attribute_empty_without_handler(monkeypatch):
     monkeypatch.delenv("_HANDLER", raising=False)
     assert get_code_attribute() == {}
