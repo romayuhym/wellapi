@@ -245,12 +245,9 @@ Expected: FAIL — `ModuleNotFoundError: wellapi.telemetry.attributes`.
 
 - [ ] **Step 3: Write minimal implementation**
 
-Create `src/wellapi/telemetry/attributes.py`:
+Create `src/wellapi/telemetry/attributes.py` (only `typing` is imported here; `inspect`/`os`/`sys` are added later in Task 5 when they are first used, to keep this commit lint-clean):
 
 ```python
-import inspect
-import os
-import sys
 import typing
 
 from pydantic import BaseModel
@@ -573,7 +570,7 @@ Expected: FAIL — `ImportError: cannot import name 'get_code_attribute'`.
 
 - [ ] **Step 3: Write minimal implementation**
 
-Add to `src/wellapi/telemetry/attributes.py` (`inspect`, `sys`, `os` are already imported):
+First add the imports `inspect`, `os`, `sys` to the top of `src/wellapi/telemetry/attributes.py` (alongside the existing `import typing`), then add these functions:
 
 ```python
 COLD_START = True
@@ -1664,8 +1661,8 @@ Expected: all tests pass (Tasks 2-10 suites).
 
 - [ ] **Step 2: Lint**
 
-Run: `uv run ruff check src/wellapi/telemetry tests`
-Expected: no errors. If import-order (`I`) issues are reported, run `uv run ruff check --fix --select I src/wellapi/telemetry tests` and re-run.
+Run: `uvx ruff check src/wellapi/telemetry tests`
+Expected: no errors. If import-order (`I`) issues are reported, run `uvx ruff check --fix --select I src/wellapi/telemetry tests` and re-run.
 
 - [ ] **Step 3: Confirm telemetry stays optional**
 
