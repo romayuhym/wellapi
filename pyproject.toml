@@ -28,6 +28,7 @@ local = [
 ]
 telemetry = [
     "opentelemetry-sdk>=1.38.0",
+    "opentelemetry-exporter-otlp-proto-http>=1.38.0",
 ]
 
 [build-system]
@@ -57,6 +58,18 @@ known-third-party = ["fastapi", "pydantic", "starlette"]
 [tool.ruff.lint.pyupgrade]
 # Preserve types, even if a file imports `from __future__ import annotations`.
 keep-runtime-typing = true
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.0",
+    "opentelemetry-sdk>=1.38.0",
+    "opentelemetry-exporter-otlp-proto-http>=1.38.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+pythonpath = ["."]
 
 [tool.inline-snapshot]
 # default-flags=["fix"]
