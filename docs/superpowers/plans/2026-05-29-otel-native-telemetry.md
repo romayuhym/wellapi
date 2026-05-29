@@ -1363,12 +1363,12 @@ from wellapi.telemetry.config import TelemetryHandle
 
 
 def test_use_telemetry_returns_handle_and_enables(monkeypatch):
-    import wellapi.applications as app_mod
     import wellapi.telemetry.config as config_mod
 
+    # use_telemetry imports configure_telemetry from the config module at call
+    # time, so patch it there.
     fake = TelemetryHandle(TracerProvider(), object(), object())
     monkeypatch.setattr(config_mod, "configure_telemetry", lambda: fake)
-    monkeypatch.setattr(app_mod, "configure_telemetry", lambda: fake, raising=False)
 
     app = WellApi()
     handle = app.use_telemetry()
