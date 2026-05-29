@@ -1207,6 +1207,7 @@ except ImportError as err:  # pragma: no cover
 
 from wellapi.models import RequestAPIGateway, RequestJob, RequestSQS, ResponseAPIGateway
 from wellapi.telemetry.attributes import (
+    RequestAttribute,
     get_code_attribute,
     get_invocation_attribute,
     get_request_attribute,
@@ -1286,7 +1287,11 @@ class TelemetryMiddleware:
             else:
                 status_code = response.statusCode
             finally:
-                span.set_attribute("http.response.status_code", status_code)
+                # HTTP semconv key only on HTTP spans; SQS/Job use a FaaS key.
+                if attribute.trigger == "http":
+                    span.set_attribute("http.response.status_code", status_code)
+                else:
+                    span.set_attribute("faas.status_code", status_code)
 
             if self.response_hook:
                 self.response_hook(span, response)
@@ -1299,7 +1304,9 @@ class TelemetryMiddleware:
 
         return response
 
-    def _record_metric(self, attribute, status_code: int, duration_s: float) -> None:
+    def _record_metric(
+        self, attribute: RequestAttribute, status_code: int, duration_s: float
+    ) -> None:
         if attribute.trigger == "http":
             self.http_duration.record(
                 duration_s,
