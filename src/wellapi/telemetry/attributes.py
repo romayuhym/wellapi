@@ -1,3 +1,4 @@
+import os
 import typing
 
 from pydantic import BaseModel
@@ -66,11 +67,52 @@ def _get_api_gateway_attribute(request: RequestAPIGateway) -> RequestAttribute:
     )
 
 
+def _get_sqs_attribute(request: RequestSQS) -> RequestAttribute:
+    target = request.raw_event.Records[0].eventSourceARN.split(":")[-1]
+    return RequestAttribute(
+        span_name=f"{target} process",
+        kind="CONSUMER",
+        method="SQS",
+        route=target,
+        trigger="sqs",
+        attributes={
+            "messaging.system": "aws_sqs",
+            "messaging.destination.name": target,
+            "messaging.operation.name": "process",
+            "messaging.operation.type": "process",
+            "faas.trigger": "pubsub",
+        },
+    )
+
+
+def _get_job_attribute(_request: RequestJob) -> RequestAttribute:
+    # JOB_NAME is set by the framework for scheduled jobs; "job" is a defensive
+    # fallback. job.name is wellapi-specific (the scheduled job's name, distinct
+    # from the Lambda function name carried by the faas.name resource attribute).
+    name = os.environ.get("JOB_NAME") or "job"
+    return RequestAttribute(
+        span_name=name,
+        kind="SERVER",
+        method="JOB",
+        route=name,
+        trigger="job",
+        attributes={
+            "job.name": name,
+            "faas.cron": os.environ.get("SCHEDULE_EXPRESSION", ""),
+            "faas.trigger": "timer",
+        },
+    )
+
+
 def get_request_attribute(
     request: RequestAPIGateway | RequestSQS | RequestJob,
 ) -> RequestAttribute:
     if isinstance(request, RequestAPIGateway):
         return _get_api_gateway_attribute(request)
+    if isinstance(request, RequestSQS):
+        return _get_sqs_attribute(request)
+    if isinstance(request, RequestJob):
+        return _get_job_attribute(request)
     return RequestAttribute(
         span_name="unknown",
         kind="INTERNAL",

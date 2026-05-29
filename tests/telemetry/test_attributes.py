@@ -27,3 +27,29 @@ def test_api_gateway_header_attributes_skip_sensitive_and_trace(api_gateway_requ
     assert a["http.request.header.x-custom"] == "v"
     assert "http.request.header.host" not in a
     assert "http.request.header.traceparent" not in a
+
+
+def test_sqs_attributes(sqs_request):
+    attr = get_request_attribute(sqs_request)
+    assert attr.span_name == "my-queue process"
+    assert attr.kind == "CONSUMER"
+    assert attr.trigger == "sqs"
+    assert attr.route == "my-queue"
+    a = attr.attributes
+    assert a["messaging.system"] == "aws_sqs"
+    assert a["messaging.destination.name"] == "my-queue"
+    assert a["faas.trigger"] == "pubsub"
+
+
+def test_job_attributes(job_request, monkeypatch):
+    monkeypatch.setenv("JOB_NAME", "nightly")
+    monkeypatch.setenv("SCHEDULE_EXPRESSION", "rate(1 day)")
+    attr = get_request_attribute(job_request)
+    assert attr.span_name == "nightly"
+    assert attr.kind == "SERVER"
+    assert attr.trigger == "job"
+    assert attr.route == "nightly"
+    a = attr.attributes
+    assert a["job.name"] == "nightly"
+    assert a["faas.cron"] == "rate(1 day)"
+    assert a["faas.trigger"] == "timer"
