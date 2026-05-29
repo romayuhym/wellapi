@@ -1,4 +1,9 @@
-from wellapi.telemetry.attributes import RequestAttribute, get_request_attribute
+from tests.conftest import TRACEPARENT
+from wellapi.telemetry.attributes import (
+    RequestAttribute,
+    get_request_attribute,
+    get_trace_carrier,
+)
 
 
 def test_api_gateway_span_name_uses_route_not_path(api_gateway_request):
@@ -53,3 +58,17 @@ def test_job_attributes(job_request, monkeypatch):
     assert a["job.name"] == "nightly"
     assert a["faas.cron"] == "rate(1 day)"
     assert a["faas.trigger"] == "timer"
+
+
+def test_carrier_from_api_gateway_headers(api_gateway_request):
+    carrier = get_trace_carrier(api_gateway_request)
+    assert carrier["traceparent"] == TRACEPARENT
+
+
+def test_carrier_from_sqs_message_attributes(sqs_request):
+    carrier = get_trace_carrier(sqs_request)
+    assert carrier["traceparent"] == TRACEPARENT
+
+
+def test_carrier_from_job_is_empty(job_request):
+    assert get_trace_carrier(job_request) == {}

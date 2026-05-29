@@ -104,6 +104,26 @@ def _get_job_attribute(_request: RequestJob) -> RequestAttribute:
     )
 
 
+def get_trace_carrier(
+    request: RequestAPIGateway | RequestSQS | RequestJob,
+) -> dict[str, str]:
+    """Build a text-map carrier for `propagate.extract` from the inbound event."""
+    if isinstance(request, RequestAPIGateway):
+        return {key: value for key, value in request.headers.items()}
+    if isinstance(request, RequestSQS):
+        records = request.raw_event.Records
+        if not records:
+            return {}
+        carrier: dict[str, str] = {}
+        for key, value in (records[0].messageAttributes or {}).items():
+            if isinstance(value, dict):
+                string_value = value.get("stringValue")
+                if string_value is not None:
+                    carrier[key] = string_value
+        return carrier
+    return {}
+
+
 def get_request_attribute(
     request: RequestAPIGateway | RequestSQS | RequestJob,
 ) -> RequestAttribute:
