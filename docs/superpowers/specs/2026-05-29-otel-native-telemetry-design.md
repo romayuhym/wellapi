@@ -64,7 +64,7 @@ wellapi configures a **lean in-process OTel SDK**, lazily, only when
 `use_telemetry()` is called:
 
 - Builds a `Resource` from FaaS semantic conventions + `OTEL_RESOURCE_ATTRIBUTES`
-  / `OTEL_SERVICE_NAME`.
+  / `OTEL_SERVICE_NAME` (see "Resource vs span attributes" below).
 - Creates `TracerProvider`, `MeterProvider`, `LoggerProvider` with **OTLP/HTTP
   (protobuf)** exporters → `http://localhost:4318` by default (override via
   `OTEL_EXPORTER_OTLP_ENDPOINT`).
@@ -131,8 +131,34 @@ name computed in the attribute builder, per semconv:
 - Job: the job name.
 
 `_tags` is **removed**; trigger type is already expressed through `faas.trigger`
-/ `messaging.system`. The remaining http/sqs/job/faas/lambda semconv attributes
-are kept (they are already correct).
+/ `messaging.system`. The remaining http/sqs/job semconv attributes are kept.
+
+### Resource vs span attributes
+
+A `Resource` describes the entity producing telemetry; it is attached once to
+the providers and applies to every span/metric/log. Today's
+`get_lambda_attribute()` puts function-level data on each span — that is the
+wrong altitude. These move to the **Resource** (set once):
+
+```
+cloud.provider   = "aws"
+cloud.platform   = "aws_lambda"
+cloud.region     = $AWS_REGION
+faas.name        = $AWS_LAMBDA_FUNCTION_NAME
+faas.version     = $AWS_LAMBDA_FUNCTION_VERSION
+faas.instance    = $AWS_LAMBDA_LOG_STREAM_NAME
+faas.max_memory  = $AWS_LAMBDA_FUNCTION_MEMORY_SIZE   # MB → bytes
+service.name     = faas.name           # default, unless OTEL_SERVICE_NAME set
+```
+
+What stays a **span** attribute (per-invocation): `faas.coldstart`,
+`faas.trigger`, and the request-specific http/messaging attributes.
+
+**Precedence:** the framework's FaaS defaults are the base; `OTEL_SERVICE_NAME`
+and `OTEL_RESOURCE_ATTRIBUTES` override them
+(`Resource(faas_defaults).merge(env_resource)` — the last merge wins on key
+conflict). This lets a project set a friendly `service.name` or add
+`deployment.environment` without code changes.
 
 ### 5. Metrics
 
@@ -210,6 +236,40 @@ exporter logs and drops).
 - `telemetry.py` — **deleted** (the `Telemetry` provider-injection class is gone).
 - `__init__.py` — public exports (`TelemetryHandle`, hooks types).
 
+## Documentation
+
+Documentation is a first-class deliverable, not an afterthought. The new
+telemetry approach needs a complete usage guide so a project can adopt it
+end-to-end.
+
+- **New guide `docs/telemetry.md`** covering:
+  1. **Mental model** — collector-only OTel Lambda layer (project-side) + lean
+     in-process SDK (wellapi-side); why the heavy SDK/auto-instrumentation layer
+     is avoided (cold start).
+  2. **Infra setup (project-side / CDK)** — attach the collector-only layer,
+     a minimal collector config (OTLP receiver on `localhost`, exporter to the
+     backend), and the relevant env vars (`OTEL_EXPORTER_OTLP_ENDPOINT` if not
+     the default, `OTEL_SERVICE_NAME`, `OTEL_RESOURCE_ATTRIBUTES`).
+  3. **Enabling in code** — `app.use_telemetry()`, `request_hook` /
+     `response_hook`, and the returned `TelemetryHandle`.
+  4. **Adding instrumentors** — `requests` / `httpx` / `sqlalchemy` example,
+     the resulting trace tree, and the recommended `use_telemetry()`-before-
+     `instrument()` order.
+  5. **Logs** — attaching `LoggingHandler` (global vs handle), and that
+     correlation is automatic via the active span.
+  6. **Service naming & resource attributes** — `OTEL_SERVICE_NAME` /
+     `OTEL_RESOURCE_ATTRIBUTES` and the precedence rule.
+  7. **Local development** — telemetry is off unless `use_telemetry()` is
+     called; pointing at a local collector / non-fatal export when absent.
+  8. **Migration** — from the removed `Telemetry(...)` / old `use_telemetry()`
+     signature to the new API.
+- **`README.md`** — update the `telemetry` extra description and link to the
+  guide.
+- **`docs/framework-usage.md`** — short telemetry subsection linking to the
+  guide.
+- **Docstrings** — `use_telemetry()`, `TelemetryHandle`, and the public
+  attribute/flush helpers documented inline.
+
 ## Tests
 
 wellapi gains a small telemetry test suite (the SDK is a dev dependency):
@@ -229,9 +289,8 @@ wellapi gains a small telemetry test suite (the SDK is a dev dependency):
 ## Migration & compatibility
 
 Breaking changes: the `Telemetry` class is removed and `use_telemetry()` changes
-signature (no provider arguments, returns a handle). Bump the version and update
-`README.md` / `docs/framework-usage.md` with the collector-only layer setup,
-required `OTEL_*` env vars, and the instrumentor/logging examples above.
+signature (no provider arguments, returns a handle). Bump the version and ship
+the documentation above in the same change.
 
 ## Out of scope / follow-ups
 
