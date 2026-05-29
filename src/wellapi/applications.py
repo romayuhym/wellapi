@@ -34,10 +34,11 @@ from wellapi.routing import (
     is_body_allowed_for_status_code,
     request_response,
 )
-from wellapi.telemetry.telemetry import Telemetry
 
 if TYPE_CHECKING:
     from opentelemetry.trace import Span
+
+    from wellapi.telemetry.config import TelemetryHandle
 
 
 def to_camel_case(snake_str):
@@ -278,7 +279,7 @@ class WellApi:
                 1,
                 Middleware(
                     TelemetryMiddleware,
-                    telemetry=self.telemetry,
+                    handle=self.telemetry,
                     request_hook=self.request_hook,
                     response_hook=self.response_hook,
                 ),
@@ -322,13 +323,19 @@ class WellApi:
 
     def use_telemetry(
         self,
-        telemetry: Telemetry,
         request_hook: Callable[["Span", RequestAPIGateway], None] | None = None,
         response_hook: Callable[["Span", ResponseAPIGateway | None], None] | None = None,
-    ) -> None:
-        self.telemetry = telemetry
+    ) -> "TelemetryHandle":
+        """Enable native OpenTelemetry. Stands up a lean in-process SDK (OTLP/HTTP
+        to the localhost collector), registers the providers globally, installs the
+        telemetry middleware, and returns the provider handle. Call this before
+        enabling instrumentors (e.g. RequestsInstrumentor().instrument())."""
+        from wellapi.telemetry.config import configure_telemetry
+
+        self.telemetry = configure_telemetry()
         self.request_hook = request_hook
         self.response_hook = response_hook
+        return self.telemetry
 
     def get(
         self,
