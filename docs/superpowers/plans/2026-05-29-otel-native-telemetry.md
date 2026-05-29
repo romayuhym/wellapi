@@ -67,7 +67,10 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra"
+pythonpath = ["."]
 ```
+
+(`pythonpath = ["."]` puts the repo root on `sys.path` so `from tests.conftest import ...` resolves `tests` as a namespace package — no `__init__.py` files needed.)
 
 - [ ] **Step 2: Sync the environment**
 
