@@ -411,9 +411,12 @@ def _get_sqs_attribute(request: RequestSQS) -> RequestAttribute:
 
 
 def _get_job_attribute(_request: RequestJob) -> RequestAttribute:
-    name = os.environ.get("JOB_NAME", "")
+    # JOB_NAME is set by the framework for scheduled jobs; "job" is a defensive
+    # fallback. job.name is wellapi-specific (the scheduled job's name, distinct
+    # from the Lambda function name carried by the faas.name resource attribute).
+    name = os.environ.get("JOB_NAME") or "job"
     return RequestAttribute(
-        span_name=name or "job",
+        span_name=name,
         kind="SERVER",
         method="JOB",
         route=name,
