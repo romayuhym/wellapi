@@ -1588,7 +1588,7 @@ import logging
 from opentelemetry.sdk._logs import LoggingHandler
 
 # uses the global provider that wellapi configured
-logging.getLogger().addHandler(LoggingHandler(level="INFO"))
+logging.getLogger().addHandler(LoggingHandler(level=logging.INFO))
 ```
 
 Or pass the provider explicitly via the handle:
@@ -1596,15 +1596,16 @@ Or pass the provider explicitly via the handle:
 ```python
 handle = app.use_telemetry()
 logging.getLogger().addHandler(
-    LoggingHandler(level="INFO", logger_provider=handle.logger_provider)
+    LoggingHandler(level=logging.INFO, logger_provider=handle.logger_provider)
 )
 ```
 
 ## Resource attributes & service naming
 
 wellapi builds the OTel `Resource` from AWS Lambda env vars (FaaS semantic
-conventions): `faas.name`, `faas.version`, `faas.instance`, `cloud.region`,
-`faas.max_memory`, and `service.name` (defaults to the function name).
+conventions): `cloud.provider`, `cloud.platform`, `cloud.region`, `faas.name`,
+`faas.version`, `faas.instance`, `faas.max_memory`, and `service.name` (defaults
+to the function name).
 `OTEL_SERVICE_NAME` and `OTEL_RESOURCE_ATTRIBUTES` override these without code
 changes.
 
