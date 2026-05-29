@@ -2,6 +2,9 @@ import os
 from dataclasses import dataclass
 from typing import Any
 
+from opentelemetry import metrics, trace
+from opentelemetry._logs import get_logger_provider, set_logger_provider
+
 _INSTALL_HINT = (
     "WellApi telemetry requires `opentelemetry-sdk` and "
     "`opentelemetry-exporter-otlp-proto-http`.\n"
@@ -48,3 +51,59 @@ def _build_resource() -> Any:
         attributes["service.name"] = name
 
     return Resource.create(attributes)
+
+
+def _build_providers(resource: Any) -> tuple[Any, Any, Any]:
+    try:
+        from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
+        from opentelemetry.exporter.otlp.proto.http.metric_exporter import (
+            OTLPMetricExporter,
+        )
+        from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
+            OTLPSpanExporter,
+        )
+        from opentelemetry.sdk._logs import LoggerProvider
+        from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
+        from opentelemetry.sdk.metrics import MeterProvider
+        from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+        from opentelemetry.sdk.trace import TracerProvider
+        from opentelemetry.sdk.trace.export import BatchSpanProcessor
+    except ImportError as err:
+        raise RuntimeError(_INSTALL_HINT) from err
+
+    # Exporters default to OTEL_EXPORTER_OTLP_ENDPOINT or http://localhost:4318,
+    # i.e. the collector-only Lambda layer running on localhost.
+    tracer_provider = TracerProvider(resource=resource)
+    tracer_provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))
+
+    meter_provider = MeterProvider(
+        resource=resource,
+        metric_readers=[PeriodicExportingMetricReader(OTLPMetricExporter())],
+    )
+
+    logger_provider = LoggerProvider(resource=resource)
+    logger_provider.add_log_record_processor(
+        BatchLogRecordProcessor(OTLPLogExporter())
+    )
+    return tracer_provider, meter_provider, logger_provider
+
+
+def configure_telemetry() -> TelemetryHandle:
+    """Stand up a lean in-process SDK and register it globally, or reuse an
+    already-configured global SDK TracerProvider (escape hatch for projects that
+    pre-configure custom processors)."""
+    try:
+        from opentelemetry.sdk.trace import TracerProvider
+    except ImportError as err:
+        raise RuntimeError(_INSTALL_HINT) from err
+
+    existing = trace.get_tracer_provider()
+    if isinstance(existing, TracerProvider):
+        return TelemetryHandle(existing, metrics.get_meter_provider(), get_logger_provider())
+
+    resource = _build_resource()
+    tracer_provider, meter_provider, logger_provider = _build_providers(resource)
+    trace.set_tracer_provider(tracer_provider)
+    metrics.set_meter_provider(meter_provider)
+    set_logger_provider(logger_provider)
+    return TelemetryHandle(tracer_provider, meter_provider, logger_provider)
