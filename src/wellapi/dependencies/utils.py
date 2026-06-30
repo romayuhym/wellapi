@@ -907,11 +907,13 @@ def get_typed_return_annotation(call: Callable[..., Any]) -> Any:
 def _get_flat_fields_from_params(fields: List[ModelField]) -> List[ModelField]:
     if not fields:
         return fields
-    first_field = fields[0]
-    if len(fields) == 1 and lenient_issubclass(first_field.type_, BaseModel):
-        fields_to_extract = get_cached_model_fields(first_field.type_)
-        return fields_to_extract
-    return fields
+    flat_fields: List[ModelField] = []
+    for field in fields:
+        if lenient_issubclass(field.type_, BaseModel):
+            flat_fields.extend(get_cached_model_fields(field.type_))
+        else:
+            flat_fields.append(field)
+    return flat_fields
 
 
 def get_flat_params(dependant: Dependant) -> List[ModelField]:
